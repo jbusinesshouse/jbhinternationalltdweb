@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { SignInForm } from "@/components/auth/SignInForm";
 import { BRAND } from "@/lib/constants";
 
@@ -7,6 +8,8 @@ export const metadata: Metadata = {
   description: `Sign in to your ${BRAND.name} account to place orders and manage your business.`,
   robots: { index: false },
 };
+
+export const dynamic = "force-dynamic";
 
 export default function SignInPage() {
   return (
@@ -17,7 +20,9 @@ export default function SignInPage() {
           Sign in to place orders, message sellers, and more.
         </p>
         <div className="mt-6">
-          <SignInForm />
+          <Suspense fallback={<p className="text-sm text-muted">Loading...</p>}>
+            <SignInForm />
+          </Suspense>
         </div>
         <p className="mt-6 text-center text-xs text-muted">
           You can browse products without signing in.

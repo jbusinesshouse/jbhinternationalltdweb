@@ -1,13 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { createClient } from "@/lib/supabase/client";
 
 export function SignInForm() {
-  const router = useRouter();
+  const searchParams = useSearchParams();
+  const nextPath = searchParams.get("next") || "/profile";
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -35,8 +37,8 @@ export function SignInForm() {
       return;
     }
 
-    router.push("/products");
-    router.refresh();
+    // Full page navigation ensures middleware refreshes cookies for server components
+    window.location.href = nextPath;
   };
 
   return (

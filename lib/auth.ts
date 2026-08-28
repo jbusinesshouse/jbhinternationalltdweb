@@ -1,22 +1,31 @@
 import { createClient } from "./supabase/server";
+import type { User } from "@supabase/supabase-js";
+import {
+  buildShellProfile,
+  normalizeProfile,
+  type UserProfile,
+} from "./profile";
 
-export type UserProfile = {
-  id: string;
-  full_name: string | null;
-  email: string | null;
-  phone: string | null;
-  store_name: string | null;
-  avatar_url: string | null;
-  store_type: "wholesale" | "retail" | null;
-  address: string | null;
-  district: string | null;
-  upazila: string | null;
-  status: "active" | "freeze" | "restricted" | null;
-  default_delivery_address_id: string | null;
-};
+export type { UserProfile } from "./profile";
 
-const PROFILE_SELECT =
-  "id, full_name, email, phone, store_name, avatar_url, store_type, address, district, upazila, status, default_delivery_address_id";
+export async function fetchProfileForUser(
+  user: User
+): Promise<UserProfile | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Profile fetch error:", error.message);
+    return null;
+  }
+
+  if (!data) return null;
+  return normalizeProfile(data as Record<string, unknown>, user);
+}
 
 export async function getAuthSession() {
   const supabase = await createClient();
@@ -28,15 +37,11 @@ export async function getAuthSession() {
     return { user: null, profile: null };
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select(PROFILE_SELECT)
-    .eq("id", user.id)
-    .single();
+  const profile = await fetchProfileForUser(user);
 
   return {
     user,
-    profile: (profile as UserProfile | null) ?? null,
+    profile: profile ?? buildShellProfile(user),
   };
 }
 

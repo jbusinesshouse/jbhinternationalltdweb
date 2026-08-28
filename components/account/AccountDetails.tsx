@@ -7,13 +7,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/PageElements";
 import { UserProfile } from "@/lib/auth";
-import {
-  createDeliveryAddress,
-  deleteDeliveryAddress,
-  DeliveryAddress,
-  listDeliveryAddresses,
-  setDefaultDeliveryAddress,
-} from "@/lib/deliveryAddresses";
+import { DeliveryAddressSection } from "@/components/delivery/DeliveryAddressSection";
 import { supabase } from "@/lib/supabase/browser";
 
 type SellerProduct = {
@@ -30,16 +24,12 @@ export function AccountDetails({ profile }: { profile: UserProfile }) {
   const isSeller = profile.store_type === "wholesale";
 
   const [products, setProducts] = useState<SellerProduct[]>([]);
-  const [addresses, setAddresses] = useState<DeliveryAddress[]>([]);
   const [filter, setFilter] = useState<"all" | "active" | "other">("all");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
 
   const load = async () => {
     setLoading(true);
-    const addr = await listDeliveryAddresses(profile.id);
-    setAddresses(addr);
-
     if (isSeller) {
       const { data } = await supabase
         .from("products")
@@ -75,26 +65,6 @@ export function AccountDetails({ profile }: { profile: UserProfile }) {
     setProducts((prev) => prev.filter((p) => p.id !== id));
   };
 
-  const handleAddAddress = async () => {
-    const district = prompt("District:");
-    const upazila = prompt("Upazila:");
-    const address = prompt("Address:");
-    if (!district || !address) return;
-    await createDeliveryAddress(profile.id, { district, upazila, address });
-    load();
-  };
-
-  const handleDeleteAddress = async (id: string) => {
-    if (!confirm("Remove this address?")) return;
-    await deleteDeliveryAddress(id, profile.id);
-    load();
-  };
-
-  const handleSetDefault = async (id: string | null) => {
-    await setDefaultDeliveryAddress(profile.id, id);
-    router.refresh();
-  };
-
   if (loading) {
     return <p className="text-muted">Loading account...</p>;
   }
@@ -123,62 +93,11 @@ export function AccountDetails({ profile }: { profile: UserProfile }) {
       </Card>
 
       <Card>
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Delivery Addresses</h2>
-          <Button size="sm" onClick={handleAddAddress}>
-            Add Address
-          </Button>
-        </div>
-        {addresses.length === 0 ? (
-          <p className="mt-4 text-sm text-muted">
-            No saved addresses. Your store address is used by default.
-          </p>
-        ) : (
-          <div className="mt-4 space-y-3">
-            {addresses.map((addr) => (
-              <div
-                key={addr.id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border p-3"
-              >
-                <div>
-                  <p className="font-medium">
-                    {addr.label || "Saved address"}
-                  </p>
-                  <p className="text-sm text-muted">
-                    {[addr.address, addr.upazila, addr.district]
-                      .filter(Boolean)
-                      .join(", ")}
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleSetDefault(addr.id)}
-                    className="text-xs text-primary hover:underline"
-                  >
-                    {profile.default_delivery_address_id === addr.id
-                      ? "Default"
-                      : "Set default"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteAddress(addr.id)}
-                    className="text-xs text-red-600 hover:underline"
-                  >
-                    Remove
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-        <button
-          type="button"
-          onClick={() => handleSetDefault(null)}
-          className="mt-3 text-sm text-primary hover:underline"
-        >
-          Use store address as default
-        </button>
+        <h2 className="text-lg font-semibold">Delivery Addresses</h2>
+        <DeliveryAddressSection
+          profile={profile}
+          onProfileDefaultChange={() => router.refresh()}
+        />
       </Card>
 
       {isSeller && (

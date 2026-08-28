@@ -1,14 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { LINKS } from "@/lib/constants";
 import { createClient } from "@/lib/supabase/client";
 
 export function SignUpForm() {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -70,8 +68,7 @@ export function SignUpForm() {
       }
     }
 
-    router.push("/products");
-    router.refresh();
+    window.location.href = "/products";
   };
 
   return (

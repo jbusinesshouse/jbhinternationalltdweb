@@ -4,6 +4,11 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { findOrCreateChatRoom } from "@/lib/chat";
+import {
+  canPlaceOrders,
+  getOrderBlockReason,
+  type UserProfile,
+} from "@/lib/profile";
 import { supabase } from "@/lib/supabase/browser";
 
 type ProductSize = {
@@ -89,6 +94,11 @@ export function ProductOrderActions({
   const [activeVariantIndex, setActiveVariantIndex] = useState(0);
   const [loading, setLoading] = useState(false);
   const [loadingVariants, setLoadingVariants] = useState(true);
+  const [buyerProfile, setBuyerProfile] = useState<Pick<
+    UserProfile,
+    "store_type" | "status"
+  > | null>(null);
+  const [buyerProfileLoading, setBuyerProfileLoading] = useState(Boolean(userId));
 
   useEffect(() => {
     const load = async () => {
@@ -112,6 +122,35 @@ export function ProductOrderActions({
     };
     load();
   }, [product.id]);
+
+  useEffect(() => {
+    if (!userId) {
+      setBuyerProfile(null);
+      setBuyerProfileLoading(false);
+      return;
+    }
+
+    const loadBuyerProfile = async () => {
+      setBuyerProfileLoading(true);
+      const { data } = await supabase
+        .from("profiles")
+        .select("store_type, status")
+        .eq("id", userId)
+        .maybeSingle();
+
+      setBuyerProfile(
+        data
+          ? {
+              store_type: data.store_type,
+              status: data.status,
+            }
+          : null
+      );
+      setBuyerProfileLoading(false);
+    };
+
+    void loadBuyerProfile();
+  }, [userId]);
 
   const setQuantity = (variantId: string, sizeId: string, value: number) => {
     const size = sizes.find((s) => s.id === sizeId);
@@ -140,12 +179,17 @@ export function ProductOrderActions({
   const estimatedTotal = totalQty * Number(product.price);
   const isBelowMoq = totalQty > 0 && totalQty < product.moq;
   const meetsMoq = totalQty >= product.moq;
+  const canOrder = !buyerProfileLoading && canPlaceOrders(buyerProfile);
+  const orderBlockReason = buyerProfileLoading
+    ? null
+    : getOrderBlockReason(buyerProfile);
 
   const handleCheckout = () => {
     if (!userId) {
       router.push("/sign-in");
       return;
     }
+    if (!canOrder) return;
     if (!meetsMoq) return;
 
     const payload = {
@@ -319,9 +363,22 @@ export function ProductOrderActions({
             <Button
               size="lg"
               onClick={handleCheckout}
-              disabled={!meetsMoq || variants.length === 0}
+              disabled={
+                buyerProfileLoading ||
+                !canOrder ||
+                !meetsMoq ||
+                variants.length === 0
+              }
             >
-              Proceed to Checkout
+              {buyerProfileLoading
+                ? "Loading..."
+                : buyerProfile?.store_type === "wholesale"
+                  ? "Only Retailers Can Order"
+                  : buyerProfile?.status === "freeze"
+                    ? "Account Frozen"
+                    : buyerProfile?.status === "restricted"
+                      ? "Account Restricted"
+                      : "Proceed to Checkout"}
             </Button>
             <Button
               size="lg"
@@ -348,6 +405,10 @@ export function ProductOrderActions({
         <p className="mt-3 text-sm text-muted">
           You can browse sizes above. Sign in to place an order or message the seller.
         </p>
+      )}
+
+      {userId && orderBlockReason && (
+        <p className="mt-3 text-sm text-amber-600">{orderBlockReason}</p>
       )}
     </div>
   );
