@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ReactNode } from "react";
+import { DashboardMobileNav } from "@/components/account/DashboardMobileNav";
 import { UserProfile } from "@/lib/auth";
 
 type NavItem = {
@@ -113,6 +114,7 @@ export function DashboardShell({ children, profile }: DashboardShellProps) {
         </aside>
 
         <div className="min-w-0 flex-1">
+          <DashboardMobileNav profile={profile} />
           {profile.status && profile.status !== "active" && (
             <div
               className={`mb-6 rounded-lg px-4 py-3 text-sm font-medium ${

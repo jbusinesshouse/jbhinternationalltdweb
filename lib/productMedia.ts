@@ -68,7 +68,7 @@ export async function removeProductStoragePaths(
 export async function softDeleteProduct(productId: string): Promise<void> {
   await supabase
     .from("products")
-    .update({ is_deleted: true, status: "inactive" })
+    .update({ is_deleted: true, active: false })
     .eq("id", productId);
 }
 

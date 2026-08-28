@@ -7,5 +7,5 @@ export default async function ProductUploadPage() {
   if (!profile) return null;
   if (profile.store_type !== "wholesale") redirect("/profile");
   if (profile.status !== "active") redirect("/profile");
-  return <ProductUploadForm sellerId={profile.id} />;
+  return <ProductUploadForm sellerId={profile.id} profile={profile} />;
 }
