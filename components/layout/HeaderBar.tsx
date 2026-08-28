@@ -95,11 +95,13 @@ export function HeaderBar({ user, profile }: HeaderBarProps) {
       <div className="mx-auto w-full max-w-7xl px-3 py-3 sm:px-6 lg:px-8">
         <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           <Link href="/" className="shrink-0 min-w-0" onClick={closeMenu}>
-            <span className="relative text-base font-bold text-white sm:text-lg lg:text-xl">
-              {BRAND.shortName}
-              <span className="hidden min-[400px]:inline"> International</span>
-              <span className="absolute text-[8px] font-semibold uppercase leading-none tracking-wide text-gray-400 sm:text-[9px]" style={{ bottom: "-9px", right: "-5px" }}>
-                LTD
+            <span className="relative whitespace-nowrap text-[11px] font-bold leading-tight text-white min-[375px]:text-xs sm:text-sm md:text-base lg:text-xl">
+              {BRAND.shortName} International
+              <span
+                className="absolute text-[7px] font-semibold uppercase leading-none tracking-wide text-gray-400 min-[375px]:text-[8px] sm:text-[9px]"
+                style={{ bottom: "-9px", right: "-5px" }}
+              >
+                Limited
               </span>
             </span>
           </Link>
