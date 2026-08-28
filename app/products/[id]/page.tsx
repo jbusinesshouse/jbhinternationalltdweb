@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Button } from "@/components/ui/Button";
+import { ProductImageGallery } from "@/components/products/ProductImageGallery";
+import { ProductOrderActions } from "@/components/products/ProductOrderActions";
 import { ProductGrid } from "@/components/products/ProductGrid";
 import { getAuthSession } from "@/lib/auth";
 import { fetchProductById, fetchProductFeed } from "@/lib/products";
@@ -43,7 +44,6 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
   const images = [...product.product_images].sort(
     (a, b) => (b.is_main ? 1 : 0) - (a.is_main ? 1 : 0)
   );
-  const mainImage = images[0];
 
   const relatedProducts = product.category_id
     ? await fetchProductFeed({
@@ -98,42 +98,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
         </nav>
 
         <div className="grid gap-8 lg:grid-cols-2">
-          <div className="overflow-hidden rounded-xl border border-border bg-white">
-            <div className="relative aspect-square bg-surface">
-              {mainImage ? (
-                <Image
-                  src={mainImage.image_url}
-                  alt={product.name}
-                  fill
-                  className="object-cover"
-                  priority
-                  sizes="(max-width: 1024px) 100vw, 50vw"
-                />
-              ) : (
-                <div className="flex h-full items-center justify-center text-muted">
-                  No image available
-                </div>
-              )}
-            </div>
-            {images.length > 1 && (
-              <div className="flex gap-2 overflow-x-auto p-4">
-                {images.map((img, i) => (
-                  <div
-                    key={i}
-                    className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-border"
-                  >
-                    <Image
-                      src={img.image_url}
-                      alt={`${product.name} ${i + 1}`}
-                      fill
-                      className="object-cover"
-                      sizes="64px"
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          <ProductImageGallery images={images} productName={product.name} />
 
           <div className="flex flex-col">
             <h1 className="text-2xl font-bold text-foreground sm:text-3xl">
@@ -176,33 +141,17 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
               </Link>
             )}
 
-            <div className="mt-6 flex flex-wrap gap-3">
-              {user ? (
-                <>
-                  <Button href="/download" size="lg">
-                    Order via App
-                  </Button>
-                  <Button href="/download" variant="outline" size="lg">
-                    Message Seller
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button href="/sign-in" size="lg">
-                    Sign In to Order
-                  </Button>
-                  <Button href="/sign-in" variant="outline" size="lg">
-                    Message Seller
-                  </Button>
-                </>
-              )}
-            </div>
-
-            <p className="mt-4 text-sm text-muted">
-              {user
-                ? "Use the mobile app to place orders and chat with sellers."
-                : "Create a free account or sign in to place orders and chat with sellers."}
-            </p>
+            <ProductOrderActions
+              product={{
+                id: product.id,
+                name: product.name,
+                price: product.price,
+                moq: product.moq,
+                seller_id: product.seller_id,
+                product_images: product.product_images,
+              }}
+              userId={user?.id ?? null}
+            />
 
             {product.description && (
               <div className="mt-8 rounded-xl border border-border bg-white p-6">

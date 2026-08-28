@@ -28,6 +28,22 @@ export async function Header() {
         </div>
 
         <nav className="ml-auto flex items-center gap-1 sm:gap-2">
+          {user && (
+            <>
+              <Link
+                href="/messages"
+                className="hidden rounded-lg px-3 py-2 text-sm font-medium text-gray-300 transition-colors hover:bg-white/10 hover:text-white sm:inline"
+              >
+                Messages
+              </Link>
+              <Link
+                href="/notifications"
+                className="hidden rounded-lg px-3 py-2 text-sm font-medium text-gray-300 transition-colors hover:bg-white/10 hover:text-white sm:inline"
+              >
+                Alerts
+              </Link>
+            </>
+          )}
           {navLinks.map((link) => (
             <Link
               key={link.href}

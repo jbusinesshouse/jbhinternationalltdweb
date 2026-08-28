@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { CategoryFilter } from "@/components/products/CategoryFilter";
-import { ProductGrid } from "@/components/products/ProductGrid";
+import { ProductFeedSection } from "@/components/products/ProductFeedSection";
 import { FeaturedStores } from "@/components/stores/FeaturedStores";
 import { fetchCategories, fetchSubcategories } from "@/lib/categories";
 import { fetchActiveFeaturedStores } from "@/lib/featuredStores";
-import { fetchProductFeed } from "@/lib/products";
+import { fetchInitialProductFeed } from "@/lib/products";
 
 export const metadata: Metadata = {
   title: "Products",
@@ -21,13 +21,12 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   const categoryId = params.category;
   const subcategoryId = params.subcategory;
 
-  const [categories, subcategories, products, stores] = await Promise.all([
+  const [categories, subcategories, feed, stores] = await Promise.all([
     fetchCategories(),
     fetchSubcategories(),
-    fetchProductFeed({
+    fetchInitialProductFeed({
       categoryId,
       subcategoryId,
-      limit: 40,
     }),
     !categoryId ? fetchActiveFeaturedStores() : Promise.resolve([]),
   ]);
@@ -60,7 +59,11 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
         )}
 
         <div className="mt-8">
-          <ProductGrid products={products} />
+          <ProductFeedSection
+            initialProducts={feed.products}
+            organicIds={feed.organicIds}
+            initialOffset={feed.nextOffset}
+          />
         </div>
       </div>
     </div>

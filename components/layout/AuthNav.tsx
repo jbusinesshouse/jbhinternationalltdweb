@@ -78,7 +78,7 @@ export function AuthNav({ initialUser, initialProfile }: AuthNavProps) {
   return (
     <div className="ml-1 flex items-center gap-2">
       <Link
-        href="/account"
+        href="/profile"
         className="flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-white/10"
       >
         <div className="relative h-8 w-8 overflow-hidden rounded-full bg-primary/20">
