@@ -20,20 +20,40 @@ export function ChatThread({ roomId }: { roomId: string }) {
   const [loading, setLoading] = useState(true);
   const bottomRef = useRef<HTMLDivElement>(null);
 
+  const roomLoadedRef = useRef(false);
+
   const load = async () => {
+    // Local session (no network round trip) — the API verifies the token anyway.
     const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return;
+      data: { session },
+    } = await supabase.auth.getSession();
+    const user = session?.user;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
     setUserId(user.id);
-    const roomRes = await fetchChatRoom(roomId);
-    setRoom(roomRes.data);
-    const msgRes = await fetchChatMessages(roomId);
-    setMessages(msgRes.data);
+
+    const [roomRes, msgRes] = await Promise.all([
+      roomLoadedRef.current ? Promise.resolve(null) : fetchChatRoom(roomId),
+      fetchChatMessages(roomId),
+    ]);
+    if (roomRes) {
+      setRoom(roomRes.data);
+      roomLoadedRef.current = true;
+    }
+    // Keep the same array when nothing changed so the 5s poll does not re-scroll the chat.
+    setMessages((prev) => {
+      const next = msgRes.data;
+      return prev.length === next.length && prev[prev.length - 1]?.id === next[next.length - 1]?.id
+        ? prev
+        : next;
+    });
     setLoading(false);
   };
 
   useEffect(() => {
+    roomLoadedRef.current = false;
     load();
     // Realtime on chat_messages is blocked by the BFF-only RLS lockdown; poll the API.
     const timer = setInterval(() => {

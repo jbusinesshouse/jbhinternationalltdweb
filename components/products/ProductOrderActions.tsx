@@ -53,25 +53,51 @@ function QuantityStepper({
   disabled?: boolean;
   label: string;
 }) {
+  // While the user is typing we show exactly what they typed (including an empty box);
+  // outside of editing the box mirrors `value`.
+  const [draft, setDraft] = useState<string | null>(null);
+
   const btn =
     "grid h-10 w-11 place-items-center text-xl text-foreground transition-colors hover:bg-surface disabled:cursor-not-allowed disabled:opacity-35";
+
+  const step = (delta: number) => {
+    setDraft(null);
+    onChange(Math.max(0, Math.min(max, value + delta)));
+  };
+
+  const handleType = (raw: string) => {
+    // Accept Bangla digits too (copy/paste or a Bangla keyboard), then keep digits only.
+    const ascii = raw.replace(/[০-৯]/g, (d) => String("০১২৩৪৫৬৭৮৯".indexOf(d)));
+    const digits = ascii.replace(/\D/g, "").slice(0, 7);
+    if (digits === "") {
+      setDraft("");
+      onChange(0);
+      return;
+    }
+    const n = Math.min(max, parseInt(digits, 10));
+    setDraft(String(n)); // strips leading zeros and caps at the available stock
+    onChange(n);
+  };
+
   return (
-    <div className="flex items-center overflow-hidden rounded-xl border-[1.5px] border-[#D1D5DB] bg-white">
-      <button type="button" onClick={() => onChange(value - 1)} disabled={disabled || value <= 0} className={btn} aria-label={`${label} কমান`}>
+    <div className="flex items-center overflow-hidden rounded-xl border-[1.5px] border-[#D1D5DB] bg-white focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/20">
+      <button type="button" onClick={() => step(-1)} disabled={disabled || value <= 0} className={btn} aria-label={`${label} কমান`}>
         −
       </button>
       <input
-        type="number"
+        type="text"
         inputMode="numeric"
-        min={0}
-        max={max}
-        value={value}
+        pattern="[0-9]*"
+        autoComplete="off"
+        value={draft ?? String(value)}
         disabled={disabled}
-        onChange={(e) => onChange(parseInt(e.target.value, 10) || 0)}
-        className="h-10 w-14 border-x border-border bg-transparent text-center font-bold focus:outline-none disabled:opacity-50 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+        onFocus={(e) => e.currentTarget.select()}
+        onChange={(e) => handleType(e.target.value)}
+        onBlur={() => setDraft(null)}
+        className="h-10 w-14 border-x border-border bg-transparent text-center font-bold focus:outline-none disabled:opacity-50"
         aria-label={`${label} পরিমাণ`}
       />
-      <button type="button" onClick={() => onChange(value + 1)} disabled={disabled || value >= max} className={btn} aria-label={`${label} বাড়ান`}>
+      <button type="button" onClick={() => step(1)} disabled={disabled || value >= max} className={btn} aria-label={`${label} বাড়ান`}>
         +
       </button>
     </div>

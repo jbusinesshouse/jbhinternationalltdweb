@@ -15,9 +15,13 @@ export function MessagesInbox() {
   useEffect(() => {
     const load = async () => {
       const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
+        data: { session },
+      } = await supabase.auth.getSession();
+      const user = session?.user;
+      if (!user) {
+        setLoading(false);
+        return;
+      }
       setUserId(user.id);
       const { data } = await fetchUserChatRooms();
       setRooms(data);
