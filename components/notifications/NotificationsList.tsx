@@ -85,7 +85,7 @@ export function NotificationsList({ profile }: { profile: UserProfile }) {
                   <button
                     type="button"
                     onClick={() => markRead(item.id)}
-                    className="text-xs text-primary hover:underline"
+                    className="text-xs text-primary-strong hover:underline"
                   >
                     Mark read
                   </button>
@@ -114,7 +114,7 @@ export function NotificationsList({ profile }: { profile: UserProfile }) {
               {item.order_id && (
                 <Link
                   href={getOrderLink(item.order_id)}
-                  className="mt-3 inline-block text-sm text-primary hover:underline"
+                  className="mt-3 inline-block text-sm text-primary-strong hover:underline"
                 >
                   View order →
                 </Link>

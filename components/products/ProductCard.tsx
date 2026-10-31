@@ -1,16 +1,21 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ProductFeedItem } from "@/lib/productFeed";
+import { bnNumber, bnPrice, STORE_TYPE_LABEL } from "@/lib/labels";
+import type { ProductFeedItem } from "@/lib/productFeed";
 
 type ProductCardProps = {
   product: ProductFeedItem;
+  /** Eager-load the first row of a page. */
+  priority?: boolean;
 };
 
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({ product, priority = false }: ProductCardProps) {
+  const typeLabel = product.seller_store_type ? STORE_TYPE_LABEL[product.seller_store_type] : null;
+
   return (
     <Link
       href={`/products/${product.id}`}
-      className="group flex flex-col overflow-hidden rounded-xl border border-border bg-white shadow-sm transition-shadow hover:shadow-md"
+      className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-white transition-[border-color,box-shadow] hover:border-primary hover:shadow-[0_12px_28px_rgba(18,33,63,0.10)]"
     >
       <div className="relative aspect-square bg-surface">
         {product.productImg ? (
@@ -18,45 +23,36 @@ export function ProductCard({ product }: ProductCardProps) {
             src={product.productImg}
             alt={product.name}
             fill
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            priority={priority}
+            className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
           />
         ) : (
-          <div className="flex h-full items-center justify-center text-muted">
-            <svg
-              className="h-16 w-16 opacity-30"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1}
-                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-              />
-            </svg>
-          </div>
+          <div className="grid h-full place-items-center text-sm text-muted">ছবি নেই</div>
         )}
-        {product.isSponsored && (
-          <span className="absolute left-2 top-2 rounded-md bg-primary px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
-            Promoted
+        {product.isSponsored ? (
+          <span className="absolute left-2.5 top-2.5 rounded-full bg-primary px-2.5 py-1 text-xs font-bold text-primary-ink">
+            স্পন্সরড
           </span>
-        )}
+        ) : typeLabel ? (
+          <span
+            className={`absolute left-2.5 top-2.5 rounded-full px-2.5 py-1 text-xs font-bold text-white ${
+              product.seller_store_type === "retail" ? "bg-teal" : "bg-navy"
+            }`}
+          >
+            {typeLabel}
+          </span>
+        ) : null}
       </div>
-      <div className="flex flex-1 flex-col p-3">
-        {product.isSponsored && (
-          <span className="mb-1 text-[10px] font-bold uppercase tracking-wide text-primary">
-            Promoted
-          </span>
-        )}
-        <h3 className="line-clamp-2 text-sm font-medium text-foreground">
+      <div className="flex flex-1 flex-col gap-1 px-3 pb-4 pt-3 sm:px-3.5">
+        <h3 className="line-clamp-2 min-h-[2.6em] text-[15px] font-semibold leading-snug text-foreground">
           {product.name}
         </h3>
-        <p className="mt-1 text-base font-bold text-foreground">
-          BDT {product.price}
+        <p className="text-lg font-extrabold sm:text-xl">
+          {bnPrice(product.price)}{" "}
+          <span className="text-xs font-medium text-muted">/ পিস</span>
         </p>
-        <p className="mt-0.5 text-xs text-muted">MOQ {product.moq}</p>
+        <p className="text-[13px] font-semibold text-moq">MOQ {bnNumber(product.moq)} পিস</p>
       </div>
     </Link>
   );

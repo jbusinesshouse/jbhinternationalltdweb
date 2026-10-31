@@ -35,7 +35,7 @@ export default async function PublicCheckoutPage() {
           </Button>
         </div>
         <p className="mt-6 text-sm text-muted">
-          <Link href="/products" className="text-primary hover:underline">
+          <Link href="/products" className="text-primary-strong hover:underline">
             Continue browsing
           </Link>
         </p>

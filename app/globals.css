@@ -1,13 +1,26 @@
 @import "tailwindcss";
 
+/*
+ * JBH design tokens (see the redesign canvas). Contrast-checked:
+ * orange fills carry dark ink text; orange text uses --primary-strong.
+ */
 :root {
   --background: #ffffff;
   --foreground: #111827;
   --primary: #f5832b;
-  --primary-dark: #e07020;
-  --muted: #9ca3af;
-  --surface: #f3f4f6;
-  --border: #eef0f3;
+  --primary-dark: #e8711a;
+  --primary-strong: #c2560c;
+  --primary-soft: #fff4ea;
+  --primary-ink: #1f160d;
+  --navy: #12213f;
+  --navy-dark: #0d182e;
+  --navy-soft: #e8edf7;
+  --teal: #0f766e;
+  --teal-soft: #e6f4f2;
+  --moq: #a84a08;
+  --muted: #5b6475;
+  --surface: #f6f7f9;
+  --border: #e5e7eb;
 }
 
 @theme inline {
@@ -15,23 +28,36 @@
   --color-foreground: var(--foreground);
   --color-primary: var(--primary);
   --color-primary-dark: var(--primary-dark);
+  --color-primary-strong: var(--primary-strong);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-ink: var(--primary-ink);
+  --color-navy: var(--navy);
+  --color-navy-dark: var(--navy-dark);
+  --color-navy-soft: var(--navy-soft);
+  --color-teal: var(--teal);
+  --color-teal-soft: var(--teal-soft);
+  --color-moq: var(--moq);
   --color-muted: var(--muted);
   --color-surface: var(--surface);
   --color-border: var(--border);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-jakarta), var(--font-hind), system-ui, sans-serif;
 }
 
 body {
-  background: var(--background);
+  background: var(--surface);
   color: var(--foreground);
-  font-family: var(--font-sans), system-ui, sans-serif;
+  font-family: var(--font-jakarta), var(--font-hind), system-ui, sans-serif;
   overflow-x: hidden;
 }
 
 html {
   scroll-behavior: smooth;
   overflow-x: hidden;
+}
+
+:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
 }
 
 /* Custom scrollbar for category strip */

@@ -54,7 +54,7 @@ export function MessagesInbox() {
                         sizes="48px"
                       />
                     ) : (
-                      <div className="flex h-full items-center justify-center font-bold text-primary">
+                      <div className="flex h-full items-center justify-center font-bold text-primary-strong">
                         {(other?.store_name ?? "?").charAt(0)}
                       </div>
                     )}

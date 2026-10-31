@@ -240,7 +240,7 @@ export function SalesList() {
                 onClick={() => setFilter(tab.key)}
                 className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
                   filter === tab.key
-                    ? "bg-primary text-white shadow-sm"
+                    ? "bg-primary text-primary-ink shadow-sm"
                     : "bg-white text-foreground border border-border hover:bg-surface"
                 }`}
               >
@@ -280,7 +280,7 @@ export function SalesList() {
               setFilter("all");
               setSearch("");
             }}
-            className="mt-4 text-sm font-medium text-primary hover:underline"
+            className="mt-4 text-sm font-medium text-primary-strong hover:underline"
           >
             Clear filters
           </button>
@@ -316,7 +316,7 @@ export function SalesList() {
                   className={`rounded-xl border border-border border-l-4 ${borderColor} bg-white p-4 shadow-sm transition-all hover:shadow-md hover:border-primary/30`}
                 >
                   <div className="flex items-center gap-4">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary-strong">
                       {initials}
                     </div>
                     <div className="min-w-0 flex-1">

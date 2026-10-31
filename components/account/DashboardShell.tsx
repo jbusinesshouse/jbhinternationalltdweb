@@ -80,7 +80,7 @@ export function DashboardShell({ children, profile }: DashboardShellProps) {
               </p>
               <p className="truncate text-xs text-muted">{profile.email}</p>
               {profile.store_type && (
-                <span className="mt-2 inline-block rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase text-primary">
+                <span className="mt-2 inline-block rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase text-primary-strong">
                   {profile.store_type}
                 </span>
               )}
@@ -104,7 +104,7 @@ export function DashboardShell({ children, profile }: DashboardShellProps) {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="block px-3 py-1.5 text-xs text-muted hover:text-primary"
+                  className="block px-3 py-1.5 text-xs text-muted hover:text-primary-strong"
                 >
                   {link.label}
                 </Link>

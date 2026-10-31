@@ -115,8 +115,8 @@ function StatusTimeline({ status }: { status: string }) {
                 className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-colors ${
                   isPast
                     ? isCurrent
-                      ? "bg-primary text-white ring-4 ring-primary/20"
-                      : "bg-primary/20 text-primary"
+                      ? "bg-primary text-primary-ink ring-4 ring-primary/20"
+                      : "bg-primary/20 text-primary-strong"
                     : "bg-surface text-muted"
                 }`}
               >
@@ -401,7 +401,7 @@ export function SalesDetail({ orderId }: { orderId: string }) {
             <h3 className="font-semibold text-foreground">Customer</h3>
             <div className="mt-4 space-y-3">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary-strong">
                   {(order.full_name || "C")
                     .split(" ")
                     .map((n) => n[0])
@@ -414,7 +414,7 @@ export function SalesDetail({ orderId }: { orderId: string }) {
               {order.phone && (
                 <a
                   href={`tel:${order.phone}`}
-                  className="flex items-center gap-2 text-sm text-primary hover:underline"
+                  className="flex items-center gap-2 text-sm text-primary-strong hover:underline"
                 >
                   <PhoneIcon />
                   {order.phone}
@@ -423,7 +423,7 @@ export function SalesDetail({ orderId }: { orderId: string }) {
               {order.email && (
                 <a
                   href={`mailto:${order.email}`}
-                  className="flex items-center gap-2 text-sm text-primary hover:underline"
+                  className="flex items-center gap-2 text-sm text-primary-strong hover:underline"
                 >
                   <MailIcon />
                   {order.email}
@@ -446,7 +446,7 @@ export function SalesDetail({ orderId }: { orderId: string }) {
           <Card className="bg-surface/50">
             <p className="text-xs text-muted">
               Need help with this order?{" "}
-              <Link href="/support" className="font-medium text-primary hover:underline">
+              <Link href="/support" className="font-medium text-primary-strong hover:underline">
                 Contact support
               </Link>
             </p>

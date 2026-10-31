@@ -81,7 +81,7 @@ export function OrderDetail({ orderId }: { orderId: string }) {
             <p className="mt-1">{seller.store_name}</p>
             <p className="text-sm text-muted">{seller.full_name}</p>
             {seller.phone && (
-              <a href={`tel:${seller.phone}`} className="text-sm text-primary">
+              <a href={`tel:${seller.phone}`} className="text-sm text-primary-strong">
                 {seller.phone}
               </a>
             )}

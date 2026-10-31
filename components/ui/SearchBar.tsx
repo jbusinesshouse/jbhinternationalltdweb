@@ -1,73 +1,90 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useState } from "react";
+import { ChevronDownIcon, SearchIcon } from "@/components/ui/icons";
+
+type StoreTypeOption = "all" | "wholesale" | "retail";
 
 type SearchBarProps = {
   defaultValue?: string;
   placeholder?: string;
   className?: string;
-  size?: "sm" | "md";
+  /** "lg" = header search with the store-type picker; "md" = plain. */
+  size?: "md" | "lg";
 };
+
+const STORE_TYPES: { value: StoreTypeOption; label: string }[] = [
+  { value: "all", label: "সব পণ্য" },
+  { value: "wholesale", label: "পাইকারি" },
+  { value: "retail", label: "খুচরা" },
+];
 
 export function SearchBar({
   defaultValue = "",
-  placeholder = "Search products...",
+  placeholder = "কী খুঁজছেন? যেমন: জার্সি, পোলো শার্ট, জিন্স",
   className = "",
   size = "md",
 }: SearchBarProps) {
   const router = useRouter();
-  const [query, setQuery] = useState(defaultValue);
+  const params = useSearchParams();
+  const [query, setQuery] = useState(defaultValue || params.get("q") || "");
+  const initialType = params.get("storeType");
+  const [storeType, setStoreType] = useState<StoreTypeOption>(
+    initialType === "wholesale" || initialType === "retail" ? initialType : "all"
+  );
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     const trimmed = query.trim();
     if (!trimmed) return;
-    // Preserve storeType filter when re-searching from the results page.
-    const params = new URLSearchParams();
-    params.set("q", trimmed);
-    if (typeof window !== "undefined") {
-      const current = new URLSearchParams(window.location.search).get(
-        "storeType"
-      );
-      if (current === "retail" || current === "wholesale") {
-        params.set("storeType", current);
-      }
-    }
-    router.push(`/search?${params.toString()}`);
+    const next = new URLSearchParams({ q: trimmed });
+    if (storeType !== "all") next.set("storeType", storeType);
+    router.push(`/search?${next.toString()}`);
   };
 
-  const sizeClasses = size === "sm" ? "py-2 text-sm" : "py-3 text-base";
+  const large = size === "lg";
 
   return (
-    <form onSubmit={handleSubmit} className={`flex min-w-0 gap-2 ${className}`}>
+    <form
+      role="search"
+      onSubmit={handleSubmit}
+      className={`flex min-w-0 overflow-hidden rounded-2xl border-2 border-primary bg-white ${
+        large ? "h-[50px]" : "h-12"
+      } ${className}`}
+    >
+      {large && (
+        <label className="relative hidden shrink-0 items-center border-r border-border sm:flex">
+          <span className="sr-only">পণ্যের ধরন</span>
+          <select
+            value={storeType}
+            onChange={(e) => setStoreType(e.target.value as StoreTypeOption)}
+            className="h-full appearance-none bg-transparent pl-4 pr-9 text-sm font-semibold text-foreground focus:outline-none"
+          >
+            {STORE_TYPES.map((t) => (
+              <option key={t.value} value={t.value}>
+                {t.label}
+              </option>
+            ))}
+          </select>
+          <ChevronDownIcon size={16} className="pointer-events-none absolute right-3 text-muted" />
+        </label>
+      )}
       <input
         type="search"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder={placeholder}
-        className={`min-w-0 flex-1 rounded-lg border border-border bg-white px-3 text-foreground placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 sm:px-4 ${sizeClasses}`}
+        aria-label="পণ্য খুঁজুন"
+        className="min-w-0 flex-1 bg-transparent px-4 text-[15px] text-foreground placeholder:text-muted focus:outline-none"
       />
       <button
         type="submit"
-        className={`shrink-0 rounded-lg bg-primary font-semibold text-white transition-colors hover:bg-primary-dark ${sizeClasses} ${size === "sm" ? "px-3 sm:px-5" : "px-5"}`}
-        aria-label="Search"
+        className="flex shrink-0 items-center gap-2 bg-primary px-4 font-bold text-primary-ink transition-colors hover:bg-primary-dark sm:px-6"
+        aria-label="খুঁজুন"
       >
-        <span className="hidden sm:inline">Search</span>
-        <svg
-          className="h-5 w-5 sm:hidden"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2}
-          aria-hidden
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-          />
-        </svg>
+        <SearchIcon size={20} />
+        <span className="hidden sm:inline">খুঁজুন</span>
       </button>
     </form>
   );

@@ -33,7 +33,7 @@ export default function DownloadPage() {
             <ul className="mt-8 space-y-3">
               {appFeatures.map((feature) => (
                 <li key={feature} className="flex items-center gap-3">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-primary-strong">
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
@@ -55,7 +55,7 @@ export default function DownloadPage() {
 
           <div className="flex items-center justify-center">
             <div className="rounded-3xl border border-border bg-black p-8 text-center shadow-xl">
-              <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-2xl bg-primary text-4xl font-bold text-white">
+              <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-2xl bg-primary text-4xl font-bold text-primary-ink">
                 {BRAND.shortName}
               </div>
               <p className="mt-4 text-lg font-semibold text-white">

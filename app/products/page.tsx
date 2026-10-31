@@ -1,71 +1,69 @@
 import type { Metadata } from "next";
 import { CategoryFilter } from "@/components/products/CategoryFilter";
 import { ProductFeedSection } from "@/components/products/ProductFeedSection";
-import { FeaturedStores } from "@/components/stores/FeaturedStores";
 import { fetchCategories, fetchSubcategories } from "@/lib/categories";
-import { fetchActiveFeaturedStores } from "@/lib/featuredStores";
-import { fetchInitialProductFeed } from "@/lib/products";
+import { categoryLabel } from "@/lib/labels";
+import { fetchInitialProductFeed, parseCatalogStoreType } from "@/lib/products";
 
 export const metadata: Metadata = {
-  title: "Products",
+  title: "সব পণ্য",
   description:
-    "Browse wholesale clothing products from trusted Bangladeshi suppliers. No login required.",
+    "বাংলাদেশের পাইকারি ও খুচরা সেলারদের পোশাক — ভ্যাটসহ দাম, MOQ অনুযায়ী অর্ডার। Browse wholesale clothing from Bangladeshi suppliers.",
 };
 
 type ProductsPageProps = {
-  searchParams: Promise<{ category?: string; subcategory?: string }>;
+  searchParams: Promise<{ category?: string; subcategory?: string; storeType?: string }>;
 };
 
 export default async function ProductsPage({ searchParams }: ProductsPageProps) {
   const params = await searchParams;
   const categoryId = params.category;
   const subcategoryId = params.subcategory;
+  const storeType = parseCatalogStoreType(params.storeType);
 
-  const [categories, subcategories, feed, stores] = await Promise.all([
+  const [categories, subcategories, feed] = await Promise.all([
     fetchCategories(),
     fetchSubcategories(),
-    fetchInitialProductFeed({
-      categoryId,
-      subcategoryId,
-    }),
-    !categoryId ? fetchActiveFeaturedStores() : Promise.resolve([]),
+    fetchInitialProductFeed({ categoryId, subcategoryId, storeType }),
   ]);
 
+  const category = categories.find((c) => c.id === categoryId);
+  const subcategory = subcategories.find((s) => s.id === subcategoryId);
+  const title = subcategory
+    ? subcategory.name
+    : category
+      ? `${categoryLabel(category.name)} পোশাক`
+      : storeType === "wholesale"
+        ? "পাইকারি পণ্য"
+        : storeType === "retail"
+          ? "খুচরা পণ্য"
+          : "সব পণ্য";
+  const total = feed.organicIds.length + feed.products.filter((p) => p.isSponsored).length;
+
   return (
-    <div className="bg-surface min-h-screen">
-      <div className="border-b border-border bg-white">
-        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-          <h1 className="text-3xl font-bold text-foreground">
-            Wholesale Products
-          </h1>
-          <p className="mt-2 text-muted">
-            Explore our full catalog — no account needed to browse
+    <div className="mx-auto flex max-w-[1320px] flex-col gap-5 px-4 py-5 sm:px-6 sm:py-6">
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <div>
+          <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">{title}</h1>
+          <p className="mt-1 text-sm text-muted">
+            {total > 0 ? `${total.toLocaleString("bn-BD")}টি পণ্য · ` : ""}সব দাম ভ্যাটসহ, প্রতি পিস
           </p>
         </div>
       </div>
 
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <CategoryFilter
-          categories={categories}
-          subcategories={subcategories}
-          selectedCategoryId={categoryId}
-          selectedSubcategoryId={subcategoryId}
-        />
+      <CategoryFilter
+        categories={categories}
+        subcategories={subcategories}
+        selectedCategoryId={categoryId}
+        selectedSubcategoryId={subcategoryId}
+        storeType={storeType}
+      />
 
-        {!categoryId && stores.length > 0 && (
-          <div className="mt-8">
-            <FeaturedStores stores={stores} />
-          </div>
-        )}
-
-        <div className="mt-8">
-          <ProductFeedSection
-            initialProducts={feed.products}
-            organicIds={feed.organicIds}
-            initialOffset={feed.nextOffset}
-          />
-        </div>
-      </div>
+      <ProductFeedSection
+        initialProducts={feed.products}
+        organicIds={feed.organicIds}
+        initialOffset={feed.nextOffset}
+      />
     </div>
   );
 }

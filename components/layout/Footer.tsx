@@ -1,106 +1,69 @@
+import Image from "next/image";
 import Link from "next/link";
-import { BRAND, LINKS } from "@/lib/constants";
+import { LINKS } from "@/lib/constants";
 
-const footerLinks = {
-  marketplace: [
-    { href: "/products", label: "Browse Products" },
-    { href: "/search", label: "Search" },
-    { href: "/download", label: "Download App" },
-  ],
-  company: [
-    { href: "/about", label: "About Us" },
-    { href: LINKS.privacyPolicy, label: "Privacy Policy" },
-    { href: LINKS.termsAndConditions, label: "Terms & Conditions" },
-  ],
-  account: [
-    { href: "/sign-in", label: "Sign In" },
-    { href: "/sign-up", label: "Create Account" },
-  ],
-};
+const columns = [
+  {
+    title: "ক্রেতা",
+    links: [
+      { href: "/products", label: "সব পণ্য" },
+      { href: "/orders", label: "অর্ডার ট্র্যাক" },
+      { href: "/support", label: "সাহায্য" },
+    ],
+  },
+  {
+    title: "সেলার",
+    links: [
+      { href: "/hub", label: "সেলার হাব" },
+      { href: "/product-upload", label: "পণ্য আপলোড" },
+      { href: "/advertise-product", label: "বিজ্ঞাপন দিন" },
+    ],
+  },
+  {
+    title: "কোম্পানি",
+    links: [
+      { href: "/about", label: "আমাদের সম্পর্কে" },
+      { href: LINKS.termsAndConditions, label: "শর্তাবলী" },
+      { href: LINKS.privacyPolicy, label: "প্রাইভেসি পলিসি" },
+    ],
+  },
+];
 
 export function Footer() {
   return (
-    <footer className="mt-auto border-t border-border bg-black text-gray-300">
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="sm:col-span-2 lg:col-span-1">
-            <Link href="/" className="text-xl font-bold text-white">
-              {BRAND.name}
-            </Link>
-            <p className="mt-3 max-w-xs text-sm leading-relaxed text-gray-400">
-              {BRAND.description}
-            </p>
-          </div>
-
-          <div>
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-white">
-              Marketplace
-            </h3>
-            <ul className="mt-4 space-y-2">
-              {footerLinks.marketplace.map((link) => (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="text-sm hover:text-primary"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-white">
-              Company
-            </h3>
-            <ul className="mt-4 space-y-2">
-              {footerLinks.company.map((link) => (
-                <li key={link.href}>
-                  {"external" in link && link.external ? (
-                    <a
-                      href={link.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm hover:text-primary"
-                    >
-                      {link.label}
-                    </a>
-                  ) : (
-                    <Link
-                      href={link.href}
-                      className="text-sm hover:text-primary"
-                    >
-                      {link.label}
-                    </Link>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-white">
-              Account
-            </h3>
-            <ul className="mt-4 space-y-2">
-              {footerLinks.account.map((link) => (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="text-sm hover:text-primary"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+    <footer className="mt-10 bg-navy-dark text-sm text-[#C9D3E6]">
+      <div className="mx-auto grid max-w-[1320px] gap-8 px-4 py-10 sm:grid-cols-2 sm:px-6 lg:grid-cols-4">
+        <div className="flex flex-col gap-3">
+          <Image
+            src="/jbh-logo-white.png"
+            alt="JBH International Limited"
+            width={180}
+            height={52}
+            className="h-auto w-[180px]"
+          />
+          <p className="leading-relaxed">আহমেদ টাওয়ার, বনানী, ঢাকা</p>
+          <a
+            href={LINKS.playStore}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-semibold text-[#FFB27A] hover:text-white"
+          >
+            Google Play থেকে অ্যাপ নিন →
+          </a>
         </div>
-
-        <div className="mt-10 border-t border-white/10 pt-6 text-center text-sm text-gray-500">
-          &copy; {new Date().getFullYear()} {BRAND.name}. All rights reserved.
-        </div>
+        {columns.map((col) => (
+          <div key={col.title} className="flex flex-col gap-2.5">
+            <p className="font-bold text-white">{col.title}</p>
+            {col.links.map((l) => (
+              <Link key={l.href} href={l.href} className="hover:text-white">
+                {l.label}
+              </Link>
+            ))}
+          </div>
+        ))}
+      </div>
+      <div className="border-t border-[#1E2C4A] px-4 py-4 text-center text-[13px]">
+        © {new Date().getFullYear()} JBH International Limited
       </div>
     </footer>
   );

@@ -80,7 +80,7 @@ export function ProductImageGallery({
   if (images.length === 0) {
     return (
       <div className="flex aspect-square items-center justify-center bg-surface text-muted">
-        No image available
+        ছবি নেই
       </div>
     );
   }
@@ -89,7 +89,7 @@ export function ProductImageGallery({
 
   return (
     <>
-      <div className="overflow-hidden rounded-xl border border-border bg-white">
+      <div className="overflow-hidden rounded-[20px] border border-border bg-white">
         <div className="group relative aspect-square bg-surface">
           <button
             type="button"
@@ -112,7 +112,7 @@ export function ProductImageGallery({
                 type="button"
                 onClick={() => goTo(activeIndex - 1)}
                 className="absolute left-2 top-1/2 z-20 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-foreground shadow-md opacity-0 transition-opacity hover:bg-white group-hover:opacity-100"
-                aria-label="Previous image"
+                aria-label="আগের ছবি"
               >
                 <ChevronLeft />
               </button>
@@ -120,7 +120,7 @@ export function ProductImageGallery({
                 type="button"
                 onClick={() => goTo(activeIndex + 1)}
                 className="absolute right-2 top-1/2 z-20 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-foreground shadow-md opacity-0 transition-opacity hover:bg-white group-hover:opacity-100"
-                aria-label="Next image"
+                aria-label="পরের ছবি"
               >
                 <ChevronRight />
               </button>
@@ -190,7 +190,7 @@ export function ProductImageGallery({
               type="button"
               onClick={closeLightbox}
               className="rounded-lg p-2 transition-colors hover:bg-white/10"
-              aria-label="Close full screen view"
+              aria-label="বন্ধ করুন"
             >
               <CloseIcon />
             </button>
@@ -223,7 +223,7 @@ export function ProductImageGallery({
                     goTo(activeIndex - 1);
                   }}
                   className="absolute left-2 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20 sm:left-4"
-                  aria-label="Previous image"
+                  aria-label="আগের ছবি"
                 >
                   <ChevronLeft />
                 </button>
@@ -234,7 +234,7 @@ export function ProductImageGallery({
                     goTo(activeIndex + 1);
                   }}
                   className="absolute right-2 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20 sm:right-4"
-                  aria-label="Next image"
+                  aria-label="পরের ছবি"
                 >
                   <ChevronRight />
                 </button>

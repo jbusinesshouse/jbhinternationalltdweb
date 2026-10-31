@@ -14,11 +14,11 @@ type ButtonProps = {
 
 const variants = {
   primary:
-    "bg-primary text-white hover:bg-primary-dark shadow-sm",
+    "bg-primary text-primary-ink hover:bg-primary-dark shadow-sm",
   secondary:
     "bg-black text-white hover:bg-gray-800",
   outline:
-    "border-2 border-primary text-primary hover:bg-primary/5",
+    "border-2 border-primary text-primary-strong hover:bg-primary/5",
   ghost: "text-foreground hover:bg-surface",
 };
 

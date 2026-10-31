@@ -120,7 +120,7 @@ export function AccountDetails({ profile }: { profile: UserProfile }) {
                 onClick={() => setFilter(f)}
                 className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${
                   filter === f
-                    ? "bg-primary text-white"
+                    ? "bg-primary text-primary-ink"
                     : "bg-surface text-foreground"
                 }`}
               >
@@ -166,7 +166,7 @@ export function AccountDetails({ profile }: { profile: UserProfile }) {
                     <div className="flex gap-2">
                       <Link
                         href={`/edit-product/${product.id}`}
-                        className="text-sm text-primary hover:underline"
+                        className="text-sm text-primary-strong hover:underline"
                       >
                         Edit
                       </Link>

@@ -210,7 +210,7 @@ export function ProfileHub({ userId, userEmail }: ProfileHubProps) {
                 sizes="96px"
               />
             ) : (
-              <div className="flex h-full items-center justify-center text-3xl font-bold text-primary">
+              <div className="flex h-full items-center justify-center text-3xl font-bold text-primary-strong">
                 {displayName.charAt(0).toUpperCase()}
               </div>
             )}
@@ -238,7 +238,7 @@ export function ProfileHub({ userId, userEmail }: ProfileHubProps) {
                     setName(profile.full_name ?? "");
                     setEditMode(true);
                   }}
-                  className="mt-2 text-sm font-semibold text-primary hover:underline"
+                  className="mt-2 text-sm font-semibold text-primary-strong hover:underline"
                 >
                   Edit Name
                 </button>
@@ -280,7 +280,7 @@ export function ProfileHub({ userId, userEmail }: ProfileHubProps) {
                     href={item.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-between py-3 text-foreground hover:text-primary"
+                    className="flex items-center justify-between py-3 text-foreground hover:text-primary-strong"
                   >
                     {item.label}
                     <span>→</span>
@@ -289,7 +289,7 @@ export function ProfileHub({ userId, userEmail }: ProfileHubProps) {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="flex items-center justify-between py-3 text-foreground hover:text-primary"
+                    className="flex items-center justify-between py-3 text-foreground hover:text-primary-strong"
                   >
                     {item.label}
                     <span>→</span>

@@ -320,7 +320,7 @@ export function CheckoutForm({
             {isGuest && (
               <p className="rounded-lg border border-border bg-surface/60 px-3 py-2 text-sm text-muted">
                 We’ll send a one-time SMS code to confirm your order.{" "}
-                <Link href="/sign-in" className="font-semibold text-primary">
+                <Link href="/sign-in" className="font-semibold text-primary-strong">
                   Sign in
                 </Link>{" "}
                 if you already have an account.
@@ -444,7 +444,7 @@ export function CheckoutForm({
                     <button
                       type="button"
                       onClick={() => setAddressMode("custom")}
-                      className="mt-2 text-sm font-semibold text-primary hover:underline"
+                      className="mt-2 text-sm font-semibold text-primary-strong hover:underline"
                     >
                       Create a new address
                     </button>
@@ -496,7 +496,7 @@ export function CheckoutForm({
                         onChange={(e) =>
                           setSaveCustomAddress(e.target.checked)
                         }
-                        className="h-4 w-4 rounded border-border text-primary focus:ring-primary/20"
+                        className="h-4 w-4 rounded border-border text-primary-strong focus:ring-primary/20"
                       />
                       <span className="text-sm text-foreground">
                         Save this address for next time
@@ -510,7 +510,7 @@ export function CheckoutForm({
                           onChange={(e) =>
                             setSetCustomAsDefault(e.target.checked)
                           }
-                          className="h-4 w-4 rounded border-border text-primary focus:ring-primary/20"
+                          className="h-4 w-4 rounded border-border text-primary-strong focus:ring-primary/20"
                         />
                         <span className="text-sm text-foreground">
                           Set as my default delivery address

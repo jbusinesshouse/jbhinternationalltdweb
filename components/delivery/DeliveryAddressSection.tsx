@@ -151,7 +151,7 @@ export function DeliveryAddressSection({
         <div className="flex items-center justify-between gap-2">
           <p className="font-semibold text-foreground">Store address</p>
           {defaultId == null && (
-            <span className="rounded-full bg-primary px-2.5 py-0.5 text-xs font-semibold text-white">
+            <span className="rounded-full bg-primary px-2.5 py-0.5 text-xs font-semibold text-primary-ink">
               Default
             </span>
           )}
@@ -164,7 +164,7 @@ export function DeliveryAddressSection({
             type="button"
             onClick={handleSetDefaultStore}
             disabled={saving}
-            className="mt-3 text-sm font-semibold text-primary hover:underline disabled:opacity-50"
+            className="mt-3 text-sm font-semibold text-primary-strong hover:underline disabled:opacity-50"
           >
             Set as default delivery
           </button>
@@ -197,7 +197,7 @@ export function DeliveryAddressSection({
                   {addr.label?.trim() || "Saved address"}
                 </p>
                 {isDefault && (
-                  <span className="rounded-full bg-primary px-2.5 py-0.5 text-xs font-semibold text-white">
+                  <span className="rounded-full bg-primary px-2.5 py-0.5 text-xs font-semibold text-primary-ink">
                     Default
                   </span>
                 )}
@@ -211,7 +211,7 @@ export function DeliveryAddressSection({
                     type="button"
                     onClick={() => handleSetDefaultSaved(addr.id)}
                     disabled={saving}
-                    className="text-sm font-semibold text-primary hover:underline disabled:opacity-50"
+                    className="text-sm font-semibold text-primary-strong hover:underline disabled:opacity-50"
                   >
                     Set as default
                   </button>
@@ -254,7 +254,7 @@ export function DeliveryAddressSection({
               type="button"
               onClick={handleCreate}
               disabled={saving}
-              className="flex-1 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-dark disabled:opacity-50"
+              className="flex-1 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-ink transition-colors hover:bg-primary-dark disabled:opacity-50"
             >
               {saving ? "Saving…" : "Save address"}
             </button>
@@ -264,7 +264,7 @@ export function DeliveryAddressSection({
         <button
           type="button"
           onClick={() => setShowForm(true)}
-          className="mt-4 w-full rounded-xl border border-dashed border-primary bg-primary/5 px-4 py-3 text-sm font-semibold text-primary transition-colors hover:bg-primary/10"
+          className="mt-4 w-full rounded-xl border border-dashed border-primary bg-primary/5 px-4 py-3 text-sm font-semibold text-primary-strong transition-colors hover:bg-primary/10"
         >
           + Add delivery address
         </button>

@@ -75,7 +75,7 @@ export function ChatThread({ roomId }: { roomId: string }) {
         <Card className="mb-4 flex items-center gap-3 py-3">
           <Link
             href={`/products/${room.product.id}`}
-            className="text-sm font-semibold text-primary hover:underline"
+            className="text-sm font-semibold text-primary-strong hover:underline"
           >
             View product: {room.product.name}
           </Link>
@@ -93,7 +93,7 @@ export function ChatThread({ roomId }: { roomId: string }) {
               <div
                 className={`max-w-[80%] rounded-xl px-4 py-2 text-sm ${
                   isMine
-                    ? "bg-primary text-white"
+                    ? "bg-primary text-primary-ink"
                     : "bg-surface text-foreground"
                 }`}
               >
@@ -103,7 +103,7 @@ export function ChatThread({ roomId }: { roomId: string }) {
                     <Link
                       href={`/products/${parsed.product.productId}`}
                       className={`mt-2 block text-xs underline ${
-                        isMine ? "text-white/90" : "text-primary"
+                        isMine ? "text-white/90" : "text-primary-strong"
                       }`}
                     >
                       {parsed.product.name} · BDT {parsed.product.price}

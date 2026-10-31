@@ -17,7 +17,7 @@ function FeedFooterLoader() {
         className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent"
         aria-hidden
       />
-      <p className="text-sm text-muted">Loading more products…</p>
+      <p className="text-sm text-muted">আরও পণ্য লোড হচ্ছে…</p>
     </div>
   );
 }
@@ -119,7 +119,7 @@ export function ProductFeedSection({
 
   return (
     <div>
-      <ProductGrid products={products} />
+      <ProductGrid products={products} priorityCount={5} />
 
       {loadingMore && <FeedFooterLoader />}
 

@@ -2,9 +2,9 @@ import Link from "next/link";
 import type { CatalogStoreTypeFilter } from "@/lib/products";
 
 const OPTIONS: { value: CatalogStoreTypeFilter; label: string }[] = [
-  { value: "all", label: "All" },
-  { value: "retail", label: "Retail" },
-  { value: "wholesale", label: "Wholesale" },
+  { value: "all", label: "সব" },
+  { value: "wholesale", label: "পাইকারি" },
+  { value: "retail", label: "খুচরা" },
 ];
 
 type StoreTypeFilterProps = {
@@ -14,30 +14,25 @@ type StoreTypeFilterProps = {
 
 export function StoreTypeFilter({ query, value }: StoreTypeFilterProps) {
   return (
-    <div className="flex flex-wrap gap-2" role="tablist" aria-label="Seller type">
+    <nav aria-label="সেলারের ধরন" className="flex gap-1 rounded-xl bg-[#E9ECF1] p-1">
       {OPTIONS.map((opt) => {
         const active = value === opt.value;
         const params = new URLSearchParams();
         if (query) params.set("q", query);
         if (opt.value !== "all") params.set("storeType", opt.value);
-        const href = `/search?${params.toString()}`;
-
         return (
           <Link
             key={opt.value}
-            href={href}
-            role="tab"
-            aria-selected={active}
-            className={
-              active
-                ? "rounded-full bg-primary px-3.5 py-1.5 text-sm font-semibold text-white"
-                : "rounded-full border border-border bg-white px-3.5 py-1.5 text-sm font-semibold text-muted hover:border-primary/40 hover:text-foreground"
-            }
+            href={`/search?${params.toString()}`}
+            aria-current={active ? "page" : undefined}
+            className={`inline-flex h-9 items-center rounded-[9px] px-3.5 text-sm ${
+              active ? "bg-white font-bold shadow-sm" : "font-semibold text-foreground/80 hover:bg-white/60"
+            }`}
           >
             {opt.label}
           </Link>
         );
       })}
-    </div>
+    </nav>
   );
 }

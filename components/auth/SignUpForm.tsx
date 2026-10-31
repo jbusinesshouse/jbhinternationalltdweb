@@ -370,13 +370,13 @@ export function SignUpForm() {
         />
         <span>
           By checking the box, you agree to our{" "}
-          <Link href={LINKS.privacyPolicy} className="text-primary hover:underline">
+          <Link href={LINKS.privacyPolicy} className="text-primary-strong hover:underline">
             Privacy Policy
           </Link>{" "}
           and{" "}
           <Link
             href={LINKS.termsAndConditions}
-            className="text-primary hover:underline"
+            className="text-primary-strong hover:underline"
           >
             Terms & Conditions
           </Link>
@@ -390,7 +390,7 @@ export function SignUpForm() {
 
       <p className="text-center text-sm text-muted">
         Already have an account?{" "}
-        <Link href="/sign-in" className="font-semibold text-primary hover:underline">
+        <Link href="/sign-in" className="font-semibold text-primary-strong hover:underline">
           Sign in
         </Link>
       </p>

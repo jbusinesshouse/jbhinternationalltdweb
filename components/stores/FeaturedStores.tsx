@@ -1,46 +1,34 @@
 import Image from "next/image";
 import Link from "next/link";
-import { FeaturedStore } from "@/lib/featuredStores";
+import type { FeaturedStore } from "@/lib/featuredStores";
 
-type FeaturedStoresProps = {
-  stores: FeaturedStore[];
-};
-
-export function FeaturedStores({ stores }: FeaturedStoresProps) {
+export function FeaturedStores({ stores }: { stores: FeaturedStore[] }) {
   if (!stores.length) return null;
 
   return (
-    <section>
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-xl font-bold text-foreground">Featured Stores</h2>
-      </div>
-      <div className="grid grid-cols-4 gap-4 sm:grid-cols-6 md:grid-cols-8">
-        {stores.map((store) => (
-          <Link
-            key={store.id}
-            href={`/store/${store.id}`}
-            className="group flex flex-col items-center gap-2"
-          >
-            <div className="relative h-16 w-16 overflow-hidden rounded-full border-2 border-border bg-surface transition-colors group-hover:border-primary">
-              {store.avatar_url ? (
-                <Image
-                  src={store.avatar_url}
-                  alt={store.store_name ?? "Store"}
-                  fill
-                  className="object-cover"
-                  sizes="64px"
-                />
-              ) : (
-                <div className="flex h-full items-center justify-center bg-primary/10 text-lg font-bold text-primary">
-                  {(store.store_name ?? "S").charAt(0).toUpperCase()}
-                </div>
-              )}
-            </div>
-            <span className="line-clamp-2 text-center text-xs font-medium text-foreground group-hover:text-primary">
-              {store.store_name ?? "Store"}
-            </span>
-          </Link>
-        ))}
+    <section className="flex flex-col gap-4">
+      <h2 className="text-2xl font-extrabold tracking-tight">ফিচার্ড স্টোর</h2>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+        {stores.map((store) => {
+          const name = store.store_name ?? "স্টোর";
+          return (
+            <Link
+              key={store.id}
+              href={`/store/${store.id}`}
+              className="group flex flex-col items-center gap-3 rounded-2xl border border-border bg-white p-4 text-center transition-colors hover:border-primary"
+            >
+              <span className="relative grid h-16 w-16 place-items-center overflow-hidden rounded-full bg-primary-soft text-xl font-bold text-primary-strong">
+                {store.avatar_url ? (
+                  <Image src={store.avatar_url} alt="" fill className="object-cover" sizes="64px" />
+                ) : (
+                  name.charAt(0).toUpperCase()
+                )}
+              </span>
+              <span className="line-clamp-2 text-sm font-bold">{name}</span>
+              <span className="text-xs font-semibold text-primary-strong">স্টোর দেখুন →</span>
+            </Link>
+          );
+        })}
       </div>
     </section>
   );

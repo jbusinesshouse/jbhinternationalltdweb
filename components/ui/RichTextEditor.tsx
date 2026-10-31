@@ -25,7 +25,7 @@ const defaultToolbarState: ToolbarState = {
 function toolbarButtonClass(active: boolean) {
   return `rounded px-2.5 py-1 text-sm font-semibold transition-colors ${
     active
-      ? "bg-primary text-white"
+      ? "bg-primary text-primary-ink"
       : "text-muted hover:bg-white hover:text-foreground"
   }`;
 }

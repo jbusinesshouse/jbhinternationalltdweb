@@ -1,22 +1,28 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Hind_Siliguri, Plus_Jakarta_Sans } from "next/font/google";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
+import { MobileTabBar } from "@/components/layout/MobileTabBar";
 import { BRAND } from "@/lib/constants";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+/** Latin text and numbers. */
+const jakarta = Plus_Jakarta_Sans({
+  variable: "--font-jakarta",
   subsets: ["latin"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+/** Bangla text (falls through from Jakarta, which has no Bengali glyphs). */
+const hind = Hind_Siliguri({
+  variable: "--font-hind",
+  subsets: ["bengali", "latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
 });
 
 const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://jbhinternational.com";
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://jbhinternationallimited.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -35,7 +41,7 @@ export const metadata: Metadata = {
   ],
   openGraph: {
     type: "website",
-    locale: "en_US",
+    locale: "bn_BD",
     siteName: BRAND.name,
     title: `${BRAND.name} — ${BRAND.tagline}`,
     description: BRAND.description,
@@ -58,13 +64,14 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      lang="bn"
+      className={`${jakarta.variable} ${hind.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col">
+      <body className="flex min-h-full flex-col pb-[72px] lg:pb-0">
         <Header />
         <main className="flex-1">{children}</main>
         <Footer />
+        <MobileTabBar />
       </body>
     </html>
   );

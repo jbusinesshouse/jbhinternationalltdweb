@@ -48,7 +48,7 @@ export default async function OrderConfirmationPage({ searchParams }: Props) {
           </Button>
           <Link
             href="/sign-in"
-            className="text-sm font-semibold text-primary self-center"
+            className="text-sm font-semibold text-primary-strong self-center"
           >
             Sign in
           </Link>
