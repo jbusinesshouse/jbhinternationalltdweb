@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { EmptyState, PageHeader, StatusBadge } from "@/components/ui/PageElements";
-import { supabase } from "@/lib/supabase/browser";
+import { apiRequest } from "@/lib/api";
 import { calcOrderItemCount, calcOrderTotal, formatDate } from "@/lib/utils";
 
 type OrderItem = {
@@ -124,31 +124,12 @@ export function SalesList() {
   const [search, setSearch] = useState("");
 
   const load = useCallback(async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const { data: products } = await supabase
-      .from("products")
-      .select("id")
-      .eq("seller_id", user.id);
-
-    if (!products?.length) {
+    try {
+      const res = await apiRequest<{ orders: OrderRow[] }>("/sales", { auth: true });
+      setOrders(res.orders ?? []);
+    } catch {
       setOrders([]);
-      return;
     }
-
-    const ids = products.map((p) => p.id);
-    const { data } = await supabase
-      .from("orders")
-      .select(
-        `id, status, created_at, full_name, order_items (quantity, price_snapshot, product_name_snapshot)`
-      )
-      .in("product_id", ids)
-      .order("created_at", { ascending: false });
-
-    setOrders((data as OrderRow[]) ?? []);
   }, []);
 
   useEffect(() => {

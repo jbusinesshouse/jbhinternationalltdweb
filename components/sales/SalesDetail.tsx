@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Card, PageHeader, StatusBadge } from "@/components/ui/PageElements";
-import { supabase } from "@/lib/supabase/browser";
+import { apiRequest } from "@/lib/api";
 import { calcOrderItemCount, calcOrderTotal, formatDate } from "@/lib/utils";
 
 const STATUS_FLOW = ["pending", "processing", "shipped", "completed"] as const;
@@ -174,14 +174,12 @@ export function SalesDetail({ orderId }: { orderId: string }) {
   } | null>(null);
 
   const load = async () => {
-    const { data } = await supabase
-      .from("orders")
-      .select(
-        `*, order_items (quantity, price_snapshot, product_name_snapshot, product_variants (color), product_sizes (size))`
-      )
-      .eq("id", orderId)
-      .single();
-    setOrder(data as Order | null);
+    try {
+      const res = await apiRequest<{ order: Order }>(`/sales/${orderId}`, { auth: true });
+      setOrder(res.order);
+    } catch {
+      setOrder(null);
+    }
     setLoading(false);
   };
 
@@ -202,71 +200,34 @@ export function SalesDetail({ orderId }: { orderId: string }) {
 
   const confirmUpdate = async () => {
     if (!order || !pendingStatus) return;
-
-    if (pendingStatus === "cancelled") {
-      setUpdating(true);
-      try {
-        const { data: existing } = await supabase
-          .from("notifications")
-          .select("id")
-          .eq("order_id", order.id)
-          .eq("type", "order_cancel_request")
-          .eq("action_completed", false)
-          .limit(1);
-
-        if (existing && existing.length > 0) {
-          showMessage("error", "A cancellation request was already sent.");
-          setPendingStatus(null);
-          setUpdating(false);
-          return;
-        }
-
-        await supabase.from("notifications").insert({
-          user_id: order.user_id,
-          title: "Order cancellation request",
-          message:
-            "The seller has requested to cancel this order. Do you accept?",
-          type: "order_cancel_request",
-          action_completed: false,
-          order_id: order.id,
-          is_read: false,
-        });
-        showMessage("success", "Cancellation request sent to the buyer.");
-      } catch {
-        showMessage("error", "Failed to send cancellation request.");
-      }
-      setUpdating(false);
-      setPendingStatus(null);
-      return;
+    const oldStatus = order.status;
+    const isCancelRequest = pendingStatus === "cancelled";
+    setUpdating(true);
+    if (!isCancelRequest) {
+      setOrder((prev) => (prev ? { ...prev, status: pendingStatus } : prev));
     }
 
-    const oldStatus = order.status;
-    setUpdating(true);
-    setOrder((prev) => (prev ? { ...prev, status: pendingStatus } : prev));
-
-    const { error } = await supabase
-      .from("orders")
-      .update({ status: pendingStatus })
-      .eq("id", order.id);
-
-    if (error) {
-      setOrder((prev) => (prev ? { ...prev, status: oldStatus } : prev));
-      showMessage("error", "Failed to update status. Please try again.");
-    } else {
-      if (pendingStatus === "completed") {
-        const productName =
-          order.order_items?.[0]?.product_name_snapshot ?? "your order";
-        await supabase.from("notifications").insert({
-          user_id: order.user_id,
-          title: "Order delivered — leave a review",
-          message: `Your order for ${productName} is complete. Tap to rate the product.`,
-          type: "order_review_request",
-          order_id: order.id,
-          is_read: false,
-          action_completed: false,
-        });
+    try {
+      // The API handles side effects: cancel = ask the buyer, completed = review request.
+      await apiRequest(`/sales/${order.id}/status`, {
+        method: "PATCH",
+        auth: true,
+        body: { status: pendingStatus },
+      });
+      showMessage(
+        "success",
+        isCancelRequest
+          ? "Cancellation request sent to the buyer."
+          : `Status updated to ${pendingStatus}.`
+      );
+    } catch (err) {
+      if (!isCancelRequest) {
+        setOrder((prev) => (prev ? { ...prev, status: oldStatus } : prev));
       }
-      showMessage("success", `Status updated to ${pendingStatus}.`);
+      showMessage(
+        "error",
+        err instanceof Error ? err.message : "Failed to update status. Please try again."
+      );
     }
 
     setUpdating(false);

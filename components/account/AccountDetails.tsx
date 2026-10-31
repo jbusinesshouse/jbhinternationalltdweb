@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/PageElements";
 import { UserProfile } from "@/lib/auth";
 import { DeliveryAddressSection } from "@/components/delivery/DeliveryAddressSection";
 import { isProductListingAccount } from "@/lib/moqRules";
-import { supabase } from "@/lib/supabase/browser";
+import { apiRequest } from "@/lib/api";
 
 type SellerProduct = {
   id: string;
@@ -32,15 +32,14 @@ export function AccountDetails({ profile }: { profile: UserProfile }) {
   const load = async () => {
     setLoading(true);
     if (isSeller) {
-      const { data } = await supabase
-        .from("products")
-        .select(
-          `id, name, price, moq, status, product_images (image_url, is_main)`
-        )
-        .eq("seller_id", profile.id)
-        .eq("is_deleted", false)
-        .order("created_at", { ascending: false });
-      setProducts((data as SellerProduct[]) ?? []);
+      try {
+        const res = await apiRequest<{ products: SellerProduct[] }>("/account/products", {
+          auth: true,
+        });
+        setProducts(res.products ?? []);
+      } catch {
+        setProducts([]);
+      }
     }
     setLoading(false);
   };
@@ -62,8 +61,12 @@ export function AccountDetails({ profile }: { profile: UserProfile }) {
 
   const handleDeleteProduct = async (id: string) => {
     if (!confirm("Delete this product?")) return;
-    await supabase.from("products").update({ is_deleted: true }).eq("id", id);
-    setProducts((prev) => prev.filter((p) => p.id !== id));
+    try {
+      await apiRequest(`/products/${id}`, { method: "DELETE", auth: true });
+      setProducts((prev) => prev.filter((p) => p.id !== id));
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Could not delete this product.");
+    }
   };
 
   if (loading) {

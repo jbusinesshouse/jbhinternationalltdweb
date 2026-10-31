@@ -4,7 +4,7 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Card, PageHeader } from "@/components/ui/PageElements";
-import { supabase } from "@/lib/supabase/browser";
+import { apiRequest } from "@/lib/api";
 
 export function SupportForm() {
   const router = useRouter();
@@ -21,26 +21,18 @@ export function SupportForm() {
     }
     setSubmitting(true);
     setError(null);
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      setError("Not signed in");
+    try {
+      await apiRequest("/support", {
+        method: "POST",
+        auth: true,
+        body: { subject: subject.trim(), message: message.trim() },
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not submit your request.");
       setSubmitting(false);
       return;
     }
-    const { error: insertError } = await supabase
-      .from("support_requests")
-      .insert({
-        user_id: user.id,
-        subject: subject.trim(),
-        message: message.trim(),
-      });
     setSubmitting(false);
-    if (insertError) {
-      setError(insertError.message);
-      return;
-    }
     alert("Support request submitted. Our team will contact you soon.");
     router.push("/profile");
   };

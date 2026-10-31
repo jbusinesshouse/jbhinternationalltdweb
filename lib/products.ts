@@ -58,11 +58,13 @@ export async function fetchProductsByIds(ids: string[]): Promise<ProductFeedItem
 export async function fetchInitialProductFeed(
   options: { categoryId?: string; subcategoryId?: string; storeType?: CatalogStoreTypeFilter } = {}
 ) {
-  const advertised = await fetchActiveAdvertisedProducts(options);
-  const organicIds = await fetchFeedIds({
-    ...options,
-    excludeIds: advertised.map((p) => p.id),
-  });
+  // Ads and the id list are independent: fetch together, then drop sponsored ids.
+  const [advertised, allIds] = await Promise.all([
+    fetchActiveAdvertisedProducts(options),
+    fetchFeedIds(options),
+  ]);
+  const adIds = new Set(advertised.map((p) => p.id));
+  const organicIds = allIds.filter((id) => !adIds.has(id));
   const firstBatchIds = organicIds.slice(0, BATCH_SIZE);
   const organic = await fetchProductsByIds(firstBatchIds);
 
@@ -77,10 +79,12 @@ export async function fetchProductFeed(
   options: { categoryId?: string; subcategoryId?: string; limit?: number } = {}
 ): Promise<ProductFeedItem[]> {
   const { limit = BATCH_SIZE * 2, ...filter } = options;
-  const advertised = await fetchActiveAdvertisedProducts(filter);
-  const ids = (
-    await fetchFeedIds({ ...filter, excludeIds: advertised.map((p) => p.id) })
-  ).slice(0, limit);
+  const [advertised, allIds] = await Promise.all([
+    fetchActiveAdvertisedProducts(filter),
+    fetchFeedIds(filter),
+  ]);
+  const adIds = new Set(advertised.map((p) => p.id));
+  const ids = allIds.filter((id) => !adIds.has(id)).slice(0, limit);
   const organic = await fetchProductsByIds(ids);
   return [...advertised, ...organic];
 }

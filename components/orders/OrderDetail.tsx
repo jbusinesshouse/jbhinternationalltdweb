@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card, PageHeader, StatusBadge } from "@/components/ui/PageElements";
-import { supabase } from "@/lib/supabase/browser";
+import { apiRequest } from "@/lib/api";
 import { calcOrderItemCount, calcOrderTotal, formatDate } from "@/lib/utils";
 
 export function OrderDetail({ orderId }: { orderId: string }) {
@@ -15,24 +15,14 @@ export function OrderDetail({ orderId }: { orderId: string }) {
 
   useEffect(() => {
     const load = async () => {
-      const { data } = await supabase
-        .from("orders")
-        .select(
-          `*, order_items (quantity, price_snapshot, product_name_snapshot, product_variants (color), product_sizes (size)), products (seller_id, product_images (image_url, is_main))`
-        )
-        .eq("id", orderId)
-        .single();
-      setOrder(data);
-      const product = Array.isArray(data?.products)
-        ? data.products[0]
-        : data?.products;
-      if (product?.seller_id) {
-        const { data: prof } = await supabase
-          .from("profiles")
-          .select("full_name, phone, store_name")
-          .eq("id", product.seller_id)
-          .single();
-        setSeller(prof);
+      try {
+        const res = await apiRequest<{ order: any; seller: any }>(`/orders/${orderId}`, {
+          auth: true,
+        });
+        setOrder(res.order);
+        setSeller(res.seller);
+      } catch {
+        setOrder(null);
       }
       setLoading(false);
     };

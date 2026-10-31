@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card, EmptyState, PageHeader } from "@/components/ui/PageElements";
 import { UserProfile } from "@/lib/auth";
-import { supabase } from "@/lib/supabase/browser";
+import { apiRequest } from "@/lib/api";
 import { formatDate } from "@/lib/utils";
 
 export function NotificationsList({ profile }: { profile: UserProfile }) {
@@ -14,16 +14,12 @@ export function NotificationsList({ profile }: { profile: UserProfile }) {
   const [actingId, setActingId] = useState<string | null>(null);
 
   const load = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return;
-    const { data } = await supabase
-      .from("notifications")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false });
-    setItems(data ?? []);
+    try {
+      const res = await apiRequest<{ notifications: any[] }>("/notifications", { auth: true });
+      setItems(res.notifications ?? []);
+    } catch {
+      setItems([]);
+    }
     setLoading(false);
   };
 
@@ -32,29 +28,28 @@ export function NotificationsList({ profile }: { profile: UserProfile }) {
   }, []);
 
   const markRead = async (id: string) => {
-    await supabase.from("notifications").update({ is_read: true }).eq("id", id);
-    setItems((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
-    );
+    setItems((prev) => prev.map((n) => (n.id === id ? { ...n, is_read: true } : n)));
+    try {
+      await apiRequest(`/notifications/${id}/read`, { method: "PATCH", auth: true });
+    } catch {
+      void load();
+    }
   };
 
-  const handleCancelAction = async (
-    item: any,
-    decision: "accept" | "reject"
-  ) => {
+  const handleCancelAction = async (item: any, decision: "accept" | "reject") => {
     if (!item.order_id || item.action_completed) return;
     setActingId(item.id);
-    const newStatus = decision === "accept" ? "cancelled" : "hold";
-    await supabase
-      .from("orders")
-      .update({ status: newStatus })
-      .eq("id", item.order_id);
-    await supabase
-      .from("notifications")
-      .update({ action_completed: true, is_read: true })
-      .eq("id", item.id);
+    try {
+      await apiRequest(`/orders/${item.order_id}/cancel-response`, {
+        method: "POST",
+        auth: true,
+        body: { accept: decision === "accept", notificationId: item.id },
+      });
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Could not update the order.");
+    }
     setActingId(null);
-    load();
+    void load();
   };
 
   const getOrderLink = (orderId: string) =>

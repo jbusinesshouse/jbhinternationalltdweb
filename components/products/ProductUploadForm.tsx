@@ -20,7 +20,7 @@ import {
   minimumOrderQuantityForStoreType,
   moqValidationMessage,
 } from "@/lib/moqRules";
-import { supabase } from "@/lib/supabase/browser";
+import { apiRequest, newIdempotencyKey } from "@/lib/api";
 import type { UserProfile } from "@/lib/profile";
 import { buyerPriceVatHint } from "@/lib/vat";
 
@@ -101,67 +101,70 @@ export function ProductUploadForm({
   const [deleteVariantIndex, setDeleteVariantIndex] = useState<number | null>(null);
 
   useEffect(() => {
-    const loadCategories = async () => {
+    const load = async () => {
       setLoadingCategories(true);
-      const { data, error } = await supabase
-        .from("categories")
-        .select("*")
-        .order("name", { ascending: true });
-      if (!error) setCategories((data as Category[]) ?? []);
-      setLoadingCategories(false);
-    };
-
-    const loadSubcategories = async () => {
       setLoadingSubcategories(true);
-      const { data, error } = await supabase
-        .from("subcategories")
-        .select("*")
-        .order("name", { ascending: true });
-      if (!error) setAllSubcategories((data as Subcategory[]) ?? []);
+      try {
+        const res = await apiRequest<{ categories: Category[] }>("/categories", { auth: false });
+        const cats = (res.categories ?? []).sort((x, y) => x.name.localeCompare(y.name));
+        setCategories(cats);
+        setLoadingCategories(false);
+        const lists = await Promise.all(
+          cats.map((c) =>
+            apiRequest<{ subcategories: { id: string; name: string }[] }>(
+              `/categories/${c.id}/subcategories`,
+              { auth: false }
+            ).then((r) => (r.subcategories ?? []).map((sc) => ({ ...sc, category_id: c.id })))
+          )
+        );
+        setAllSubcategories(lists.flat().sort((x, y) => x.name.localeCompare(y.name)));
+      } catch {
+        // leave the lists empty; the form shows its empty states
+      }
+      setLoadingCategories(false);
       setLoadingSubcategories(false);
     };
-
-    loadCategories();
-    loadSubcategories();
+    void load();
   }, []);
 
   useEffect(() => {
     if (!productId) return;
-    supabase
-      .from("products")
-      .select("*")
-      .eq("id", productId)
-      .single()
-      .then(({ data }) => {
-        if (!data) return;
+    apiRequest<{
+      product: {
+        name: string;
+        price: number | string;
+        price_base?: number;
+        moq: number;
+        description: string | null;
+        category_id: string | null;
+        subcategory_id: string | null;
+        selected_category?: string | null;
+      };
+    }>(`/products/${productId}`, { auth: true })
+      .then(({ product: data }) => {
         setName(data.name);
-        setPrice(String(data.price));
+        // The form edits the seller's base price; the API returns the buyer (VAT-incl.) price too.
+        setPrice(String(data.price_base ?? data.price));
         setMoq(String(data.moq));
         setDescription(data.description ?? "");
         setParentCategoryId(data.category_id ?? null);
         setSubCategoryId(data.subcategory_id ?? null);
-        if (data.category_id) {
-          supabase
-            .from("categories")
-            .select("name")
-            .eq("id", data.category_id)
-            .single()
-            .then(({ data: cat }) => {
-              if (cat?.name) setParentCategory(cat.name);
-            });
-        }
-        if (data.subcategory_id) {
-          supabase
-            .from("subcategories")
-            .select("name")
-            .eq("id", data.subcategory_id)
-            .single()
-            .then(({ data: sub }) => {
-              if (sub?.name) setCategory(sub.name);
-            });
-        }
-      });
+        if (data.selected_category) setCategory(data.selected_category);
+      })
+      .catch(() => {});
   }, [productId]);
+
+  // Resolve category / subcategory names once the lists are loaded (edit mode).
+  useEffect(() => {
+    if (parentCategoryId) {
+      const cat = categories.find((c) => c.id === parentCategoryId);
+      if (cat) setParentCategory(cat.name);
+    }
+    if (subCategoryId) {
+      const sub = allSubcategories.find((sc) => sc.id === subCategoryId);
+      if (sub) setCategory(sub.name);
+    }
+  }, [parentCategoryId, subCategoryId, categories, allSubcategories]);
 
   useEffect(() => {
     if (parentCategoryId && allSubcategories.length > 0) {
@@ -184,18 +187,17 @@ export function ProductUploadForm({
     const requestId = ++sizesRequestIdRef.current;
 
     const fetchSizes = async () => {
-      const { data, error } = await supabase
-        .from("sizes")
-        .select("id, label, category")
-        .eq("category", parentCategory.toLowerCase())
-        .order("sort_order", { ascending: true });
-
-      if (requestId !== sizesRequestIdRef.current) return;
-      if (error) {
+      try {
+        const res = await apiRequest<{ sizes: DbSize[] }>(
+          `/sizes?category=${encodeURIComponent(parentCategory.toLowerCase())}`,
+          { auth: false }
+        );
+        if (requestId !== sizesRequestIdRef.current) return;
+        setAvailableSizes(res.sizes ?? []);
+      } catch {
+        if (requestId !== sizesRequestIdRef.current) return;
         setAvailableSizes([]);
-        return;
       }
-      setAvailableSizes((data as DbSize[]) ?? []);
     };
 
     fetchSizes();
@@ -375,19 +377,19 @@ export function ProductUploadForm({
 
       setSubmitting(true);
       try {
-        const { error } = await supabase
-          .from("products")
-          .update({
+        await apiRequest(`/products/${productId}`, {
+          method: "PATCH",
+          auth: true,
+          body: {
             name: name.trim(),
-            price: String(priceNum),
+            price: priceNum,
             moq: moqNum,
             description,
             category_id: parentCategoryId,
             subcategory_id: subCategoryId,
             selected_category: category.trim(),
-          })
-          .eq("id", productId);
-        if (error) throw error;
+          },
+        });
         alert("Product updated!");
         router.push("/account");
       } catch (err: unknown) {
@@ -405,124 +407,50 @@ export function ProductUploadForm({
     }
 
     setSubmitting(true);
-    let createdProductId: string | null = null;
     const uploadedPaths: string[] = [];
 
     try {
       const parsedPrice = parsePositiveNumber(price)!;
       const parsedMoq = parsePositiveInt(moq)!;
 
-      const { data: productData, error: productError } = await supabase
-        .from("products")
-        .insert({
-          seller_id: sellerId,
+      // Upload first; the API then creates the product, images and variants in one call.
+      const mainUpload = await uploadProductImageFile(mainImage!);
+      uploadedPaths.push(mainUpload.path);
+      const images = [{ image_url: mainUpload.publicUrl, is_main: true, sort_order: 0 }];
+
+      for (let i = 0; i < additionalImages.length; i++) {
+        const uploaded = await uploadProductImageFile(additionalImages[i].file);
+        uploadedPaths.push(uploaded.path);
+        images.push({ image_url: uploaded.publicUrl, is_main: false, sort_order: i + 1 });
+      }
+
+      await apiRequest<{ id: string }>("/products", {
+        method: "POST",
+        auth: true,
+        idempotencyKey: newIdempotencyKey(),
+        body: {
           name: name.trim(),
           description: description.trim(),
           category_id: parentCategoryId,
-          selected_category: category.trim(),
           subcategory_id: subCategoryId,
+          selected_category: category.trim(),
           price: parsedPrice,
           moq: parsedMoq,
-          active: true,
-          status: "active",
-          is_deleted: false,
-        })
-        .select("id")
-        .single();
-
-      if (productError || !productData) {
-        throw new Error(productError?.message || "Failed to create product");
-      }
-
-      createdProductId = productData.id;
-      const newProductId = productData.id;
-      const folder = `products/${newProductId}`;
-
-      const mainUpload = await uploadProductImageFile(
-        mainImage!,
-        `${folder}/main`
-      );
-      uploadedPaths.push(mainUpload.path);
-
-      const { error: mainImageError } = await supabase.from("product_images").insert({
-        product_id: newProductId,
-        image_url: mainUpload.publicUrl,
-        is_main: true,
-        sort_order: 0,
+          images,
+          variants: variants.map((v) => ({
+            color: v.color.trim(),
+            sizes: v.sizes.map((size) => ({
+              size_id: size.size_id,
+              size: size.label,
+              stock: parsePositiveInt(size.stock)!,
+            })),
+          })),
+        },
       });
-      if (mainImageError) {
-        throw new Error(mainImageError.message || "Failed to save main image");
-      }
-
-      if (additionalImages.length > 0) {
-        const additionalRows: {
-          product_id: string;
-          image_url: string;
-          is_main: boolean;
-          sort_order: number;
-        }[] = [];
-
-        for (let i = 0; i < additionalImages.length; i++) {
-          const uploaded = await uploadProductImageFile(
-            additionalImages[i].file,
-            `${folder}/additional`
-          );
-          uploadedPaths.push(uploaded.path);
-          additionalRows.push({
-            product_id: newProductId,
-            image_url: uploaded.publicUrl,
-            is_main: false,
-            sort_order: i + 1,
-          });
-        }
-
-        const { error: additionalImagesError } = await supabase
-          .from("product_images")
-          .insert(additionalRows);
-        if (additionalImagesError) {
-          throw new Error(
-            additionalImagesError.message || "Failed to save additional images"
-          );
-        }
-      }
-
-      for (const variant of variants) {
-        const { data: variantData, error: variantError } = await supabase
-          .from("product_variants")
-          .insert({
-            product_id: newProductId,
-            color: variant.color.trim(),
-          })
-          .select("id")
-          .single();
-
-        if (variantError || !variantData) {
-          throw new Error(
-            variantError?.message || `Failed to save color ${variant.color}`
-          );
-        }
-
-        const sizesData = variant.sizes.map((size) => ({
-          variant_id: variantData.id,
-          size_id: size.size_id,
-          size: size.label,
-          stock: parsePositiveInt(size.stock)!,
-        }));
-
-        const { error: sizesError } = await supabase
-          .from("product_sizes")
-          .insert(sizesData);
-        if (sizesError) {
-          throw new Error(
-            sizesError.message || `Failed to save sizes for ${variant.color}`
-          );
-        }
-      }
 
       alert("Product uploaded successfully!");
       router.push("/account");
     } catch (err: unknown) {
-      if (createdProductId) await softDeleteProduct(createdProductId);
       if (uploadedPaths.length) await removeProductStoragePaths(uploadedPaths);
       const message = err instanceof Error ? err.message : "Upload failed";
       alert(message);

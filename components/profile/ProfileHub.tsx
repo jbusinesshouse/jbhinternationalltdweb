@@ -11,6 +11,7 @@ import { normalizeProfile, type UserProfile } from "@/lib/profile";
 import { LINKS } from "@/lib/constants";
 import { uploadAvatarFile } from "@/lib/productMedia";
 import { isProductListingAccount } from "@/lib/moqRules";
+import { apiRequest } from "@/lib/api";
 import { supabase } from "@/lib/supabase/browser";
 import { isProfileComplete } from "@/lib/utils";
 
@@ -36,24 +37,15 @@ export function ProfileHub({ userId, userEmail }: ProfileHubProps) {
     setLoading(true);
     setLoadError(null);
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      setLoadError("You are not signed in.");
-      setLoading(false);
-      return;
-    }
-
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", user.id)
-      .maybeSingle();
-
-    if (error) {
-      setLoadError(error.message);
+    let data: Record<string, unknown> | null = null;
+    try {
+      const res = await apiRequest<{ profile: Record<string, unknown> | null }>(
+        "/profiles/me",
+        { auth: true }
+      );
+      data = res.profile;
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : "You are not signed in.");
       setLoading(false);
       return;
     }
@@ -64,10 +56,8 @@ export function ProfileHub({ userId, userEmail }: ProfileHubProps) {
       return;
     }
 
-    const nextProfile = normalizeProfile(
-      data as Record<string, unknown>,
-      user
-    );
+    const normalized = normalizeProfile(data as Record<string, unknown>);
+    const nextProfile = { ...normalized, email: normalized.email ?? userEmail };
     setProfile(nextProfile);
     setName(nextProfile.full_name ?? "");
     setLoading(false);
@@ -129,12 +119,18 @@ export function ProfileHub({ userId, userEmail }: ProfileHubProps) {
   const handleSaveName = async () => {
     if (!profile || !name.trim()) return;
     setSaving(true);
-    const { error } = await supabase
-      .from("profiles")
-      .update({ full_name: name.trim() })
-      .eq("id", profile.id);
+    let ok = true;
+    try {
+      await apiRequest("/profiles/me", {
+        method: "PATCH",
+        auth: true,
+        body: { full_name: name.trim() },
+      });
+    } catch {
+      ok = false;
+    }
     setSaving(false);
-    if (!error) {
+    if (ok) {
       setEditMode(false);
       await loadProfile();
       router.refresh();
@@ -148,10 +144,11 @@ export function ProfileHub({ userId, userEmail }: ProfileHubProps) {
     setSaving(true);
     try {
       const url = await uploadAvatarFile(file);
-      await supabase
-        .from("profiles")
-        .update({ avatar_url: url })
-        .eq("id", profile.id);
+      await apiRequest("/profiles/me", {
+        method: "PATCH",
+        auth: true,
+        body: { avatar_url: url },
+      });
       await loadProfile();
       router.refresh();
     } finally {
@@ -361,15 +358,27 @@ function CompleteProfileForm({
     e.preventDefault();
     setSaving(true);
     setError(null);
-    const { error: updateError } = await supabase
-      .from("profiles")
-      .update(form)
-      .eq("id", profile.id);
-    setSaving(false);
-    if (updateError) {
-      setError(updateError.message);
+    try {
+      // store_type and status are locked server-side; never send them.
+      const { store_type: _storeType, ...editable } = form;
+      void _storeType;
+      await apiRequest("/profiles/me", {
+        method: "PATCH",
+        auth: true,
+        body: {
+          ...editable,
+          store_name: editable.store_name || null,
+          address: editable.address || null,
+          district: editable.district || null,
+          upazila: editable.upazila || null,
+        },
+      });
+    } catch (err) {
+      setSaving(false);
+      setError(err instanceof Error ? err.message : "Could not save your profile.");
       return;
     }
+    setSaving(false);
     await onSaved();
   };
 
@@ -422,20 +431,14 @@ function CompleteProfileForm({
           </div>
         ))}
         <div>
-          <label className="text-sm font-medium">Account Type *</label>
-          <select
-            value={form.store_type}
-            onChange={(e) =>
-              setForm((prev) => ({
-                ...prev,
-                store_type: e.target.value as "wholesale" | "retail",
-              }))
-            }
-            className="mt-1 w-full rounded-lg border border-border px-3 py-2"
-          >
-            <option value="retail">Retail (Buyer)</option>
-            <option value="wholesale">Wholesale (Seller)</option>
-          </select>
+          <label className="text-sm font-medium">Account Type</label>
+          <p className="mt-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm">
+            {form.store_type === "wholesale" ? "Wholesale (Seller)" : "Retail (Buyer)"}
+          </p>
+          <p className="mt-1 text-xs text-muted">
+            Account type is set when you sign up and can’t be changed here. Contact support
+            to change it.
+          </p>
         </div>
         <Button type="submit" disabled={saving} className="w-full">
           {saving ? "Saving..." : "Save & Continue"}

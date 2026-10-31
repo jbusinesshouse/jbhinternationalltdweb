@@ -20,8 +20,12 @@ import {
 } from "@/lib/deliveryAddresses";
 import { canPlaceOrders, getOrderBlockReason } from "@/lib/profile";
 import type { UserProfile } from "@/lib/auth";
-import { placeGuestOrder, requestGuestOrderOtp } from "@/lib/api";
-import { supabase } from "@/lib/supabase/browser";
+import {
+  apiRequest,
+  newIdempotencyKey,
+  placeGuestOrder,
+  requestGuestOrderOtp,
+} from "@/lib/api";
 
 type AddressMode = "store" | "saved" | "custom";
 
@@ -259,16 +263,6 @@ export function CheckoutForm({
         return;
       }
 
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        setFormError(
-          "Session expired. Please sign in again or continue as guest with OTP."
-        );
-        return;
-      }
-
       if (addressMode === "custom" && saveCustomAddress && profile) {
         const created = await createDeliveryAddress(profile.id, customForm);
         setSavedAddresses((prev) => [created, ...prev]);
@@ -278,26 +272,12 @@ export function CheckoutForm({
         }
       }
 
-      const idempotencyKey =
-        globalThis.crypto?.randomUUID?.() ??
-        `web_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-
-      const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "").replace(/\/$/, "");
-      if (!API_URL) {
-        throw new Error(
-          "API URL is not configured. Set NEXT_PUBLIC_API_URL in .env.local"
-        );
-      }
-
-      const res = await fetch(`${API_URL}/orders`, {
+      // One key per attempt: a retried request after a timeout never creates a second order.
+      const res = await apiRequest<{ orderId?: string }>("/orders", {
         method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-          "Idempotency-Key": idempotencyKey,
-        },
-        body: JSON.stringify({
+        auth: true,
+        idempotencyKey: newIdempotencyKey(),
+        body: {
           full_name: form.full_name.trim(),
           phone: form.phone.trim(),
           email: form.email.trim() || null,
@@ -305,16 +285,9 @@ export function CheckoutForm({
           address: delivery.delivery_address,
           product_id: parsed.product.id,
           items: guestItems,
-        }),
+        },
       });
-      const json = (await res.json().catch(() => null)) as {
-        orderId?: string;
-        error?: string;
-      } | null;
-      if (!res.ok) {
-        throw new Error(json?.error || `Request failed (${res.status})`);
-      }
-      router.push(`/orders/${json?.orderId}`);
+      router.push(`/orders/${res.orderId}`);
     } catch (err: unknown) {
       setFormError(
         err instanceof Error ? err.message : "Could not place order."
