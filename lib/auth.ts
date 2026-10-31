@@ -1,5 +1,7 @@
-import { createClient } from "./supabase/server";
 import type { User } from "@supabase/supabase-js";
+import { cache } from "react";
+import { apiRequest } from "./api";
+import { createClient } from "./supabase/server";
 import {
   buildShellProfile,
   normalizeProfile,
@@ -9,25 +11,24 @@ import {
 export type { UserProfile } from "./profile";
 
 export async function fetchProfileForUser(
-  user: User
+  user: User,
+  accessToken: string | null
 ): Promise<UserProfile | null> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (error) {
-    console.error("Profile fetch error:", error.message);
+  if (!accessToken) return null;
+  try {
+    const res = await apiRequest<{ profile: Record<string, unknown> | null }>(
+      "/profiles/me",
+      { auth: true, accessToken }
+    );
+    return res.profile ? normalizeProfile(res.profile, user) : null;
+  } catch (err) {
+    console.error("Profile fetch error:", err instanceof Error ? err.message : err);
     return null;
   }
-
-  if (!data) return null;
-  return normalizeProfile(data as Record<string, unknown>, user);
 }
 
-export async function getAuthSession() {
+/** Signed-in user + profile for this request (deduped across layout/page). */
+export const getAuthSession = cache(async () => {
   const supabase = await createClient();
   const {
     data: { user },
@@ -37,13 +38,14 @@ export async function getAuthSession() {
     return { user: null, profile: null };
   }
 
-  const profile = await fetchProfileForUser(user);
+  const { data } = await supabase.auth.getSession();
+  const profile = await fetchProfileForUser(user, data.session?.access_token ?? null);
 
   return {
     user,
     profile: profile ?? buildShellProfile(user),
   };
-}
+});
 
 export async function requireAuth() {
   const session = await getAuthSession();

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { findOrCreateChatRoom } from "@/lib/chat";
 import { canChat } from "@/lib/accountStatus";
@@ -10,7 +10,7 @@ import {
   getOrderBlockReason,
   type UserProfile,
 } from "@/lib/profile";
-import { supabase } from "@/lib/supabase/browser";
+import type { ProductVariantOption } from "@/lib/products";
 
 type ProductSize = {
   id: string;
@@ -33,7 +33,12 @@ type ProductOrderActionsProps = {
     seller_id: string;
     product_images: { image_url: string; is_main: boolean }[];
   };
+  /** Variants + sizes from the product API response. */
+  productVariants: ProductVariantOption[];
   userId: string | null;
+  buyerProfile: Pick<UserProfile, "store_type" | "status"> | null;
+  /** False until an SMS provider is configured on the API. */
+  guestCheckoutEnabled: boolean;
 };
 
 function QuantityStepper({
@@ -86,72 +91,33 @@ function QuantityStepper({
 
 export function ProductOrderActions({
   product,
+  productVariants,
   userId,
+  buyerProfile,
+  guestCheckoutEnabled,
 }: ProductOrderActionsProps) {
   const router = useRouter();
-  const [variants, setVariants] = useState<ProductVariant[]>([]);
-  const [sizes, setSizes] = useState<ProductSize[]>([]);
+  const variants: ProductVariant[] = useMemo(
+    () => productVariants.map((v) => ({ id: v.id, color: v.color })),
+    [productVariants]
+  );
+  const sizes: ProductSize[] = useMemo(
+    () =>
+      productVariants.flatMap((v) =>
+        (v.product_sizes ?? []).map((s) => ({
+          id: s.id,
+          size: s.size ?? s.sizes?.label ?? "",
+          stock: s.stock ?? 0,
+          variant_id: v.id,
+        }))
+      ),
+    [productVariants]
+  );
   const [qty, setQty] = useState<Record<string, Record<string, number>>>({});
   const [activeVariantIndex, setActiveVariantIndex] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [loadingVariants, setLoadingVariants] = useState(true);
-  const [buyerProfile, setBuyerProfile] = useState<Pick<
-    UserProfile,
-    "store_type" | "status"
-  > | null>(null);
-  const [buyerProfileLoading, setBuyerProfileLoading] = useState(Boolean(userId));
-
-  useEffect(() => {
-    const load = async () => {
-      setLoadingVariants(true);
-      const { data: v } = await supabase
-        .from("product_variants")
-        .select("id, color")
-        .eq("product_id", product.id);
-      setVariants(v ?? []);
-      if (v?.length) {
-        const { data: s } = await supabase
-          .from("product_sizes")
-          .select("id, size, stock, variant_id")
-          .in(
-            "variant_id",
-            v.map((x) => x.id)
-          );
-        setSizes(s ?? []);
-      }
-      setLoadingVariants(false);
-    };
-    load();
-  }, [product.id]);
-
-  useEffect(() => {
-    if (!userId) {
-      setBuyerProfile(null);
-      setBuyerProfileLoading(false);
-      return;
-    }
-
-    const loadBuyerProfile = async () => {
-      setBuyerProfileLoading(true);
-      const { data } = await supabase
-        .from("profiles")
-        .select("store_type, status")
-        .eq("id", userId)
-        .maybeSingle();
-
-      setBuyerProfile(
-        data
-          ? {
-              store_type: data.store_type,
-              status: data.status,
-            }
-          : null
-      );
-      setBuyerProfileLoading(false);
-    };
-
-    void loadBuyerProfile();
-  }, [userId]);
+  const loadingVariants = false;
+  const buyerProfileLoading = false;
 
   const setQuantity = (variantId: string, sizeId: string, value: number) => {
     const size = sizes.find((s) => s.id === sizeId);
@@ -182,8 +148,8 @@ export function ProductOrderActions({
   const meetsMoq = totalQty >= product.moq;
   const canOrderSignedIn =
     !buyerProfileLoading && canPlaceOrders(buyerProfile);
-  /** Guests can checkout with SMS OTP; signed-in users need a non-frozen account. */
-  const canOrder = userId ? canOrderSignedIn : true;
+  /** Guests can checkout with SMS OTP (once enabled); signed-in users need a non-frozen account. */
+  const canOrder = userId ? canOrderSignedIn : guestCheckoutEnabled;
   const orderBlockReason = buyerProfileLoading
     ? null
     : userId
@@ -221,7 +187,7 @@ export function ProductOrderActions({
     setLoading(true);
     const mainImg =
       product.product_images.find((i) => i.is_main)?.image_url ?? null;
-    const result = await findOrCreateChatRoom(userId, product.seller_id, {
+    const result = await findOrCreateChatRoom(product.seller_id, {
       productId: product.id,
       name: product.name,
       price: product.price,
@@ -378,7 +344,9 @@ export function ProductOrderActions({
             ? "Loading..."
             : userId && buyerProfile?.status === "freeze"
               ? "Account Frozen"
-              : "Proceed to Checkout"}
+              : !userId && !guestCheckoutEnabled
+                ? "Sign in to order"
+                : "Proceed to Checkout"}
         </Button>
         {userId ? (
           <Button
@@ -396,10 +364,16 @@ export function ProductOrderActions({
         )}
       </div>
 
-      {!userId && (
+      {!userId && guestCheckoutEnabled && (
         <p className="mt-3 text-sm text-muted">
           No account needed to order — confirm with an SMS code at checkout.
           Sign in only if you want messaging or order history.
+        </p>
+      )}
+      {!userId && !guestCheckoutEnabled && (
+        <p className="mt-3 text-sm text-muted">
+          <a href="/sign-in" className="font-medium text-primary hover:underline">Sign in</a> or{" "}
+          <a href="/sign-up" className="font-medium text-primary hover:underline">create an account</a> to place an order.
         </p>
       )}
 

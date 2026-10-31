@@ -1,6 +1,5 @@
-import { supabase } from "@/lib/supabase/browser";
+import { apiRequest, apiUpload } from "@/lib/api";
 
-const BUCKET = "product-images";
 
 export function plainTextFromHtml(html: string): string {
   return html
@@ -31,64 +30,61 @@ export type UploadedProductImage = {
   path: string;
 };
 
+function productIdFromFolder(folder?: string): string | null {
+  const match = folder?.match(
+    /products\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i
+  );
+  return match?.[1] ?? null;
+}
+
+/** Upload via the API (`/uploads/product-image`); storage writes need the service role. */
 export async function uploadProductImageFile(
   file: File,
-  folder: string
+  folder?: string
 ): Promise<UploadedProductImage> {
-  const path = `${folder}/${Date.now()}_${Math.random()
-    .toString(36)
-    .slice(2, 9)}.jpg`;
+  const form = new FormData();
+  form.append("file", file, file.name || `product_${Date.now()}.jpg`);
+  const productId = productIdFromFolder(folder);
+  if (productId) form.append("productId", productId);
 
-  const { data, error } = await supabase.storage
-    .from(BUCKET)
-    .upload(path, file, {
-      contentType: file.type || "image/jpeg",
-      upsert: false,
-    });
-
-  if (error || !data?.path) {
-    throw new Error(error?.message || "Image upload failed");
-  }
-
-  const { data: urlData } = supabase.storage
-    .from(BUCKET)
-    .getPublicUrl(data.path);
-
-  return { publicUrl: urlData.publicUrl, path: data.path };
+  const uploaded = await apiUpload<UploadedProductImage>("/uploads/product-image", form);
+  if (!uploaded?.path || !uploaded?.publicUrl) throw new Error("Image upload failed");
+  return uploaded;
 }
 
-export async function removeProductStoragePaths(
-  paths: string[]
-): Promise<void> {
+export async function removeProductStoragePaths(paths: string[]): Promise<void> {
   const unique = [...new Set(paths.filter(Boolean))];
   if (!unique.length) return;
-  await supabase.storage.from(BUCKET).remove(unique);
-}
-
-export async function softDeleteProduct(productId: string): Promise<void> {
-  await supabase
-    .from("products")
-    .update({ is_deleted: true, active: false })
-    .eq("id", productId);
-}
-
-export async function uploadAvatarFile(
-  userId: string,
-  file: File
-): Promise<string> {
-  const filePath = `${userId}.jpg`;
-  const { error } = await supabase.storage
-    .from("profile-images")
-    .upload(filePath, file, {
-      contentType: file.type || "image/jpeg",
-      upsert: true,
+  try {
+    await apiRequest("/uploads/product-images", {
+      method: "DELETE",
+      body: { paths: unique },
+      auth: true,
     });
+  } catch (error) {
+    console.warn("[productMedia] storage cleanup failed:", error);
+  }
+}
 
-  if (error) throw error;
+/** Soft-delete a product after a failed multi-step create. */
+export async function softDeleteProduct(productId: string): Promise<void> {
+  await apiRequest(`/products/${productId}`, { method: "DELETE", auth: true });
+}
 
-  const { data } = supabase.storage
-    .from("profile-images")
-    .getPublicUrl(filePath);
-
-  return `${data.publicUrl}?t=${Date.now()}`;
+/**
+ * Upload the signed-in user's avatar. Pass `accessToken` right after sign-up,
+ * before the browser session is readable.
+ */
+export async function uploadAvatarFile(
+  file: File,
+  accessToken?: string | null
+): Promise<string> {
+  const form = new FormData();
+  form.append("file", file, file.name || "avatar.jpg");
+  const uploaded = await apiUpload<{ path: string; publicUrl: string }>(
+    "/uploads/avatar",
+    form,
+    accessToken !== undefined ? { accessToken } : {}
+  );
+  return uploaded.publicUrl;
 }

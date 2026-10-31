@@ -35,22 +35,11 @@ export function ChatThread({ roomId }: { roomId: string }) {
 
   useEffect(() => {
     load();
-    const channel = supabase
-      .channel(`room-${roomId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "chat_messages",
-          filter: `room_id=eq.${roomId}`,
-        },
-        () => load()
-      )
-      .subscribe();
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    // Realtime on chat_messages is blocked by the BFF-only RLS lockdown; poll the API.
+    const timer = setInterval(() => {
+      if (document.visibilityState === "visible") void load();
+    }, 5000);
+    return () => clearInterval(timer);
   }, [roomId]);
 
   useEffect(() => {
@@ -60,7 +49,7 @@ export function ChatThread({ roomId }: { roomId: string }) {
   const handleSend = async (e: FormEvent) => {
     e.preventDefault();
     if (!userId || !text.trim()) return;
-    await sendChatMessage(roomId, userId, text);
+    await sendChatMessage(roomId, text);
     setText("");
     load();
   };

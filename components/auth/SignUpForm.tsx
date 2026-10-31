@@ -6,6 +6,7 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { DISTRICTS, getUpazilasForDistrict } from "@/lib/bdLocations";
 import { LINKS } from "@/lib/constants";
+import { apiRequest } from "@/lib/api";
 import { uploadAvatarFile } from "@/lib/productMedia";
 import { createClient } from "@/lib/supabase/client";
 import type { UserProfile } from "@/lib/profile";
@@ -100,19 +101,17 @@ export function SignUpForm() {
       let referralCreatorId: string | null = null;
       const trimmedReferralCode = referralCode.trim();
       if (trimmedReferralCode) {
-        const { data: referralData, error: referralError } = await supabase.rpc(
-          "get_referral_creator",
-          { referral_code: trimmedReferralCode }
+        const referral = await apiRequest<{ valid: boolean; creatorId: string | null }>(
+          `/referral/validate/${encodeURIComponent(trimmedReferralCode)}`,
+          { auth: false }
         );
-
-        if (referralError) throw referralError;
-        if (!referralData) {
+        if (!referral.valid || !referral.creatorId) {
           setError("Invalid referral code.");
           setLoading(false);
           return;
         }
 
-        referralCreatorId = referralData as string;
+        referralCreatorId = referral.creatorId;
       }
 
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
@@ -126,33 +125,40 @@ export function SignUpForm() {
       if (signUpError) throw signUpError;
       if (!authData.user) throw new Error("Account could not be created.");
 
-      const userId = authData.user.id;
+      const accessToken = authData.session?.access_token ?? null;
+      if (!accessToken) {
+        // Email confirmation is on in Supabase: the profile is created on first sign-in.
+        throw new Error(
+          "Account created. Please confirm your email, then sign in to finish setting up."
+        );
+      }
       let avatarUrl: string | null = null;
 
       if (avatarFile) {
         try {
-          avatarUrl = await uploadAvatarFile(userId, avatarFile);
+          avatarUrl = await uploadAvatarFile(avatarFile, accessToken);
         } catch {
           // Continue without avatar, matching mobile behavior
         }
       }
 
-      const { error: profileError } = await supabase.from("profiles").upsert({
-        id: userId,
-        full_name: trimmedFullName,
-        email: trimmedEmail,
-        phone: trimmedPhone,
-        store_name: trimmedStoreName,
-        store_type: storeType,
-        address: trimmedAddress,
-        district,
-        upazila,
-        avatar_url: avatarUrl,
-        referral_creator_id: referralCreatorId,
-        status: "active",
+      // The API sets status (wholesale accounts start restricted until an admin approves).
+      await apiRequest("/profiles/me", {
+        method: "PUT",
+        auth: true,
+        accessToken,
+        body: {
+          full_name: trimmedFullName,
+          phone: trimmedPhone,
+          store_name: trimmedStoreName,
+          store_type: storeType,
+          address: trimmedAddress,
+          district,
+          upazila,
+          avatar_url: avatarUrl,
+          referral_creator_id: referralCreatorId,
+        },
       });
-
-      if (profileError) throw profileError;
 
       window.location.href = "/products";
     } catch (err: unknown) {

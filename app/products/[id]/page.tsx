@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { ProductImageGallery } from "@/components/products/ProductImageGallery";
 import { ProductOrderActions } from "@/components/products/ProductOrderActions";
 import { ProductGrid } from "@/components/products/ProductGrid";
+import { fetchGuestCheckoutEnabled } from "@/lib/api";
 import { getAuthSession } from "@/lib/auth";
 import { fetchProductById, fetchProductFeed } from "@/lib/products";
 import { BRAND } from "@/lib/constants";
@@ -35,9 +36,10 @@ export async function generateMetadata({
 
 export default async function ProductDetailPage({ params }: ProductPageProps) {
   const { id } = await params;
-  const [product, { user }] = await Promise.all([
+  const [product, { user, profile }, guestCheckoutEnabled] = await Promise.all([
     fetchProductById(id),
     getAuthSession(),
+    fetchGuestCheckoutEnabled(),
   ]);
   if (!product) notFound();
 
@@ -151,7 +153,12 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
                 seller_id: product.seller_id,
                 product_images: product.product_images,
               }}
+              productVariants={product.product_variants}
               userId={user?.id ?? null}
+              buyerProfile={
+                profile ? { store_type: profile.store_type, status: profile.status } : null
+              }
+              guestCheckoutEnabled={guestCheckoutEnabled}
             />
 
             {product.description && (

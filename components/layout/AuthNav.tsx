@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
-import { UserProfile } from "@/lib/auth";
+import { apiRequest } from "@/lib/api";
+import { normalizeProfile, type UserProfile } from "@/lib/profile";
 import { createClient } from "@/lib/supabase/client";
 
 type AuthNavProps = {
@@ -41,12 +42,15 @@ export function AuthNav({
       setUser(nextUser);
 
       if (nextUser) {
-        const { data } = await supabase
-          .from("profiles")
-          .select("id, full_name, store_name, avatar_url, store_type")
-          .eq("id", nextUser.id)
-          .single();
-        setProfile((data as UserProfile | null) ?? null);
+        try {
+          const res = await apiRequest<{ profile: Record<string, unknown> | null }>(
+            "/profiles/me",
+            { auth: true, accessToken: session?.access_token ?? null }
+          );
+          setProfile(res.profile ? normalizeProfile(res.profile, nextUser) : null);
+        } catch {
+          setProfile(null);
+        }
       } else {
         setProfile(null);
       }

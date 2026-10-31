@@ -147,7 +147,7 @@ export function ProfileHub({ userId, userEmail }: ProfileHubProps) {
     if (!file) return;
     setSaving(true);
     try {
-      const url = await uploadAvatarFile(profile.id, file);
+      const url = await uploadAvatarFile(file);
       await supabase
         .from("profiles")
         .update({ avatar_url: url })

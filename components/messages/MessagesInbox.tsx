@@ -19,7 +19,7 @@ export function MessagesInbox() {
       } = await supabase.auth.getUser();
       if (!user) return;
       setUserId(user.id);
-      const { data } = await fetchUserChatRooms(user.id);
+      const { data } = await fetchUserChatRooms();
       setRooms(data);
       setLoading(false);
     };
