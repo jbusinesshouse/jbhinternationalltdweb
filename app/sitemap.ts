@@ -3,7 +3,7 @@ import { apiRequest } from "@/lib/api";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const siteUrl = (
-    process.env.NEXT_PUBLIC_SITE_URL ?? "https://jbhinternationallimited.com"
+    process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.jbhinternationallimited.com"
   ).replace(/\/$/, "");
   const now = new Date();
 

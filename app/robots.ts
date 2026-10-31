@@ -3,7 +3,7 @@ import { BRAND } from "@/lib/constants";
 
 export default function robots(): MetadataRoute.Robots {
   const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ?? "https://jbhinternational.com";
+    process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.jbhinternationallimited.com";
 
   return {
     rules: {

@@ -21,7 +21,7 @@ export default async function HomePage() {
     fetchGuestCheckoutEnabled(),
   ]);
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://jbhinternationallimited.com";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.jbhinternationallimited.com";
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "WebSite",

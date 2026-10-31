@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { CheckIcon } from "@/components/ui/icons";
-import { ApiError, apiRequest } from "@/lib/api";
 
 type Status = "idle" | "loading" | "done" | "error";
 
@@ -16,17 +15,23 @@ export function UnsubscribeForm({ email, token }: { email: string; token: string
   async function confirm() {
     setStatus("loading");
     try {
-      await apiRequest(
-        `/email/unsubscribe?e=${encodeURIComponent(email)}&t=${encodeURIComponent(token)}`,
-        { method: "POST", body: {}, auth: false }
+      // Same-origin call to this website; the website forwards it to the backend privately.
+      const res = await fetch(
+        `/api/unsubscribe?e=${encodeURIComponent(email)}&t=${encodeURIComponent(token)}`,
+        { method: "POST", headers: { Accept: "application/json" } }
       );
+      if (!res.ok) {
+        setMessage(
+          res.status === 400
+            ? "এই আনসাবস্ক্রাইব লিংকটি সঠিক নয় বা অসম্পূর্ণ।"
+            : "কিছু একটা সমস্যা হয়েছে। একটু পরে আবার চেষ্টা করুন।"
+        );
+        setStatus("error");
+        return;
+      }
       setStatus("done");
-    } catch (err) {
-      setMessage(
-        err instanceof ApiError && err.status === 400
-          ? "এই আনসাবস্ক্রাইব লিংকটি সঠিক নয় বা অসম্পূর্ণ।"
-          : "কিছু একটা সমস্যা হয়েছে। একটু পরে আবার চেষ্টা করুন।"
-      );
+    } catch {
+      setMessage("ইন্টারনেট সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।");
       setStatus("error");
     }
   }

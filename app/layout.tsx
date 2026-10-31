@@ -22,7 +22,7 @@ const hind = Hind_Siliguri({
 });
 
 const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://jbhinternationallimited.com";
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.jbhinternationallimited.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
