@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/PageElements";
 import { UserProfile } from "@/lib/auth";
 import { DeliveryAddressSection } from "@/components/delivery/DeliveryAddressSection";
+import { isProductListingAccount } from "@/lib/moqRules";
 import { supabase } from "@/lib/supabase/browser";
 
 type SellerProduct = {
@@ -21,7 +22,7 @@ type SellerProduct = {
 
 export function AccountDetails({ profile }: { profile: UserProfile }) {
   const router = useRouter();
-  const isSeller = profile.store_type === "wholesale";
+  const isSeller = isProductListingAccount(profile.store_type);
 
   const [products, setProducts] = useState<SellerProduct[]>([]);
   const [filter, setFilter] = useState<"all" | "active" | "other">("all");

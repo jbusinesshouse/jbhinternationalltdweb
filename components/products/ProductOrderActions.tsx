@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { findOrCreateChatRoom } from "@/lib/chat";
+import { canChat } from "@/lib/accountStatus";
 import {
   canPlaceOrders,
   getOrderBlockReason,
@@ -179,17 +180,18 @@ export function ProductOrderActions({
   const estimatedTotal = totalQty * Number(product.price);
   const isBelowMoq = totalQty > 0 && totalQty < product.moq;
   const meetsMoq = totalQty >= product.moq;
-  const canOrder = !buyerProfileLoading && canPlaceOrders(buyerProfile);
+  const canOrderSignedIn =
+    !buyerProfileLoading && canPlaceOrders(buyerProfile);
+  /** Guests can checkout with SMS OTP; signed-in users need a non-frozen account. */
+  const canOrder = userId ? canOrderSignedIn : true;
   const orderBlockReason = buyerProfileLoading
     ? null
-    : getOrderBlockReason(buyerProfile);
+    : userId
+      ? getOrderBlockReason(buyerProfile)
+      : null;
 
   const handleCheckout = () => {
-    if (!userId) {
-      router.push("/sign-in");
-      return;
-    }
-    if (!canOrder) return;
+    if (userId && !canOrderSignedIn) return;
     if (!meetsMoq) return;
 
     const payload = {
@@ -210,6 +212,10 @@ export function ProductOrderActions({
   const handleMessage = async () => {
     if (!userId) {
       router.push("/sign-in");
+      return;
+    }
+    if (!canChat(buyerProfile?.status)) {
+      alert("Your account is frozen. Messaging is disabled.");
       return;
     }
     setLoading(true);
@@ -358,52 +364,42 @@ export function ProductOrderActions({
       </div>
 
       <div className="mt-4 flex flex-wrap gap-3">
+        <Button
+          size="lg"
+          onClick={handleCheckout}
+          disabled={
+            (userId && buyerProfileLoading) ||
+            !canOrder ||
+            !meetsMoq ||
+            variants.length === 0
+          }
+        >
+          {userId && buyerProfileLoading
+            ? "Loading..."
+            : userId && buyerProfile?.status === "freeze"
+              ? "Account Frozen"
+              : "Proceed to Checkout"}
+        </Button>
         {userId ? (
-          <>
-            <Button
-              size="lg"
-              onClick={handleCheckout}
-              disabled={
-                buyerProfileLoading ||
-                !canOrder ||
-                !meetsMoq ||
-                variants.length === 0
-              }
-            >
-              {buyerProfileLoading
-                ? "Loading..."
-                : buyerProfile?.store_type === "wholesale"
-                  ? "Only Retailers Can Order"
-                  : buyerProfile?.status === "freeze"
-                    ? "Account Frozen"
-                    : buyerProfile?.status === "restricted"
-                      ? "Account Restricted"
-                      : "Proceed to Checkout"}
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={handleMessage}
-              disabled={loading}
-            >
-              {loading ? "..." : "Message Seller"}
-            </Button>
-          </>
+          <Button
+            size="lg"
+            variant="outline"
+            onClick={handleMessage}
+            disabled={loading}
+          >
+            {loading ? "..." : "Message Seller"}
+          </Button>
         ) : (
-          <>
-            <Button href="/sign-in" size="lg">
-              Sign In to Order
-            </Button>
-            <Button href="/sign-in" variant="outline" size="lg">
-              Message Seller
-            </Button>
-          </>
+          <Button href="/sign-in" variant="outline" size="lg">
+            Sign in to message
+          </Button>
         )}
       </div>
 
       {!userId && (
         <p className="mt-3 text-sm text-muted">
-          You can browse sizes above. Sign in to place an order or message the seller.
+          No account needed to order — confirm with an SMS code at checkout.
+          Sign in only if you want messaging or order history.
         </p>
       )}
 

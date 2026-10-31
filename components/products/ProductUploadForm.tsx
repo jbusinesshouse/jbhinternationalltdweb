@@ -15,8 +15,14 @@ import {
   softDeleteProduct,
   uploadProductImageFile,
 } from "@/lib/productMedia";
+import {
+  isProductListingAccount,
+  minimumOrderQuantityForStoreType,
+  moqValidationMessage,
+} from "@/lib/moqRules";
 import { supabase } from "@/lib/supabase/browser";
 import type { UserProfile } from "@/lib/profile";
+import { buyerPriceVatHint } from "@/lib/vat";
 
 const MAX_ADDITIONAL_IMAGES = 8;
 
@@ -299,9 +305,11 @@ export function ProductUploadForm({
     });
   };
 
+  const minOrderQty = minimumOrderQuantityForStoreType(profile?.store_type);
+
   const validateCreateForm = (): string | null => {
-    if (profile?.store_type !== "wholesale") {
-      return "Only wholesale seller accounts can upload products.";
+    if (!isProductListingAccount(profile?.store_type)) {
+      return "Only retail or wholesale seller accounts can upload products.";
     }
     if (profile?.status === "freeze") {
       return "Your account is frozen. You cannot upload products right now.";
@@ -314,7 +322,11 @@ export function ProductUploadForm({
     if (!parentCategoryId) return "Please select a parent category.";
     if (!subCategoryId || !category.trim()) return "Please select a sub-category.";
     if (parsePositiveNumber(price) == null) return "Please enter a valid price.";
-    if (parsePositiveInt(moq) == null) return "Please enter a valid MOQ.";
+    const moqError = moqValidationMessage(
+      profile?.store_type,
+      parsePositiveInt(moq)
+    );
+    if (moqError) return moqError;
     if (plainTextFromHtml(description).length === 0) {
       return "Please enter a product description.";
     }
@@ -351,8 +363,13 @@ export function ProductUploadForm({
     if (productId) {
       const priceNum = parsePositiveNumber(price);
       const moqNum = parsePositiveInt(moq);
+      const editMoqError = moqValidationMessage(profile?.store_type, moqNum);
       if (!name.trim() || !priceNum || !moqNum || !parentCategoryId || !subCategoryId) {
-        alert("Fill all required fields");
+        alert(editMoqError ?? "Fill all required fields");
+        return;
+      }
+      if (editMoqError) {
+        alert(editMoqError);
         return;
       }
 
@@ -517,7 +534,7 @@ export function ProductUploadForm({
   const submitDisabled =
     submitting ||
     (!productId &&
-      (profile?.store_type !== "wholesale" ||
+      (!isProductListingAccount(profile?.store_type) ||
         profile?.status === "freeze" ||
         profile?.status === "restricted"));
 
@@ -527,7 +544,7 @@ export function ProductUploadForm({
       : "Update Product"
     : submitting
       ? "Saving..."
-      : profile?.store_type !== "wholesale"
+      : !isProductListingAccount(profile?.store_type)
         ? "Sellers Only"
         : profile?.status === "freeze"
           ? "Account Frozen"
@@ -692,8 +709,14 @@ export function ProductUploadForm({
               className={fieldClass}
               required
             />
+            {(() => {
+              const vatHint = buyerPriceVatHint(price, profile?.store_type);
+              return vatHint ? (
+                <p className="-mt-1 text-xs text-muted">{vatHint}</p>
+              ) : null;
+            })()}
             <input
-              placeholder="MOQ"
+              placeholder={minOrderQty != null ? `MOQ (min ${minOrderQty})` : "MOQ"}
               value={moq}
               onChange={(e) => setMoq(e.target.value)}
               inputMode="numeric"

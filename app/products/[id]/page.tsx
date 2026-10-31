@@ -108,6 +108,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
             <p className="mt-4 text-3xl font-bold text-primary">
               BDT {product.price}
             </p>
+            <p className="mt-1 text-sm text-muted">incl. VAT</p>
             <p className="mt-1 text-sm text-muted">
               Minimum Order Quantity: {product.moq}
             </p>
@@ -145,7 +146,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
               product={{
                 id: product.id,
                 name: product.name,
-                price: product.price,
+                price: String(product.price),
                 moq: product.moq,
                 seller_id: product.seller_id,
                 product_images: product.product_images,

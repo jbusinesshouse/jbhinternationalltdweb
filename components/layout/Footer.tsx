@@ -9,8 +9,8 @@ const footerLinks = {
   ],
   company: [
     { href: "/about", label: "About Us" },
-    { href: LINKS.privacyPolicy, label: "Privacy Policy", external: true },
-    { href: LINKS.termsAndConditions, label: "Terms & Conditions", external: true },
+    { href: LINKS.privacyPolicy, label: "Privacy Policy" },
+    { href: LINKS.termsAndConditions, label: "Terms & Conditions" },
   ],
   account: [
     { href: "/sign-in", label: "Sign In" },

@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { ProductGrid } from "@/components/products/ProductGrid";
+import { StoreTypeFilter } from "@/components/search/StoreTypeFilter";
 import { SearchBar } from "@/components/ui/SearchBar";
-import { searchProducts } from "@/lib/products";
+import { parseCatalogStoreType, searchProducts } from "@/lib/products";
 
 export const metadata: Metadata = {
   title: "Search Products",
@@ -9,13 +10,14 @@ export const metadata: Metadata = {
 };
 
 type SearchPageProps = {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; storeType?: string }>;
 };
 
 export default async function SearchPage({ searchParams }: SearchPageProps) {
   const params = await searchParams;
   const query = params.q?.trim() ?? "";
-  const products = query ? await searchProducts(query) : [];
+  const storeType = parseCatalogStoreType(params.storeType);
+  const products = query ? await searchProducts(query, { storeType }) : [];
 
   return (
     <div className="bg-surface min-h-screen">
@@ -27,6 +29,11 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           <div className="mt-4 max-w-xl">
             <SearchBar defaultValue={query} />
           </div>
+          {query ? (
+            <div className="mt-4">
+              <StoreTypeFilter query={query} value={storeType} />
+            </div>
+          ) : null}
         </div>
       </div>
 
@@ -36,6 +43,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             <p className="mb-6 text-muted">
               {products.length} result{products.length !== 1 ? "s" : ""} for
               &ldquo;{query}&rdquo;
+              {storeType !== "all" ? ` · ${storeType}` : ""}
             </p>
             <ProductGrid
               products={products}

@@ -1,20 +1,17 @@
 import { redirect } from "next/navigation";
-import { Suspense } from "react";
-import { CheckoutForm } from "@/components/checkout/CheckoutForm";
-import { getAuthSession } from "@/lib/auth";
-import { canPlaceOrders } from "@/lib/profile";
 
-export default async function CheckoutPage() {
-  const { profile } = await getAuthSession();
-  if (!profile) return null;
-
-  if (!canPlaceOrders(profile)) {
-    redirect("/products");
+/** Checkout is public (guest OTP). Keep old dashboard URL working. */
+export default async function DashboardCheckoutRedirect({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
+  const qs = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (typeof value === "string") qs.set(key, value);
+    else if (Array.isArray(value) && value[0]) qs.set(key, value[0]);
   }
-
-  return (
-    <Suspense fallback={<p>Loading checkout...</p>}>
-      <CheckoutForm profile={profile} />
-    </Suspense>
-  );
+  const suffix = qs.toString();
+  redirect(suffix ? `/checkout?${suffix}` : "/checkout");
 }

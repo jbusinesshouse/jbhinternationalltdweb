@@ -1,6 +1,7 @@
 import { BATCH_SIZE, fisherYatesShuffle, formatProducts, PRODUCT_SELECT, ProductFeedItem } from "./productFeed";
 import { fetchActiveAdvertisedProducts } from "./productAds";
 import { createClient } from "./supabase/server";
+import { enrichProductPriceFields } from "./vat";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 const ID_PAGE_SIZE = 1000;
@@ -126,7 +127,12 @@ export async function fetchProductFeed(options: {
 export type ProductDetail = {
   id: string;
   name: string;
-  price: string;
+  /** Buyer-facing (VAT-inclusive). */
+  price: number | string;
+  price_base: number;
+  vat_rate: number;
+  vat_amount: number;
+  seller_store_type?: string | null;
   moq: number;
   description: string;
   seller_id: string;
@@ -152,10 +158,11 @@ export async function fetchProductById(
       moq,
       description,
       seller_id,
+      seller_store_type,
       category_id,
       subcategory_id,
       product_images (image_url, is_main),
-      seller:profiles (id, store_name, avatar_url),
+      seller:profiles (id, store_name, avatar_url, store_type),
       categories (id, name),
       subcategories (id, name)
     `
@@ -166,10 +173,38 @@ export async function fetchProductById(
     .single();
 
   if (error || !data) return null;
-  return data as unknown as ProductDetail;
+  const row = data as unknown as ProductDetail & {
+    seller?: { store_type?: string | null } | null;
+  };
+  const storeType =
+    row.seller_store_type ?? row.seller?.store_type ?? null;
+  const priced = enrichProductPriceFields({
+    price: row.price,
+    seller_store_type: storeType,
+  });
+  return {
+    ...row,
+    seller_store_type: storeType,
+    price_base: priced.price_base,
+    vat_rate: priced.vat_rate,
+    vat_amount: priced.vat_amount,
+    price: priced.price,
+  };
 }
 
-export async function searchProducts(query: string): Promise<ProductFeedItem[]> {
+export type CatalogStoreTypeFilter = "all" | "retail" | "wholesale";
+
+export function parseCatalogStoreType(
+  raw: string | undefined | null
+): CatalogStoreTypeFilter {
+  if (raw === "retail" || raw === "wholesale") return raw;
+  return "all";
+}
+
+export async function searchProducts(
+  query: string,
+  options?: { storeType?: CatalogStoreTypeFilter }
+): Promise<ProductFeedItem[]> {
   const supabase = await createClient();
   const terms = query.trim().split(/\s+/).filter(Boolean);
   if (!terms.length) return [];
@@ -179,6 +214,11 @@ export async function searchProducts(query: string): Promise<ProductFeedItem[]> 
     .select(PRODUCT_SELECT)
     .eq("is_deleted", false)
     .eq("status", "active");
+
+  const storeType = options?.storeType ?? "all";
+  if (storeType === "retail" || storeType === "wholesale") {
+    q = q.eq("seller_store_type", storeType);
+  }
 
   for (const term of terms) {
     q = q.ilike("name", `%${term}%`);

@@ -6,9 +6,11 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/PageElements";
+import { canSell } from "@/lib/accountStatus";
 import { normalizeProfile, type UserProfile } from "@/lib/profile";
 import { LINKS } from "@/lib/constants";
 import { uploadAvatarFile } from "@/lib/productMedia";
+import { isProductListingAccount } from "@/lib/moqRules";
 import { supabase } from "@/lib/supabase/browser";
 import { isProfileComplete } from "@/lib/utils";
 
@@ -76,8 +78,8 @@ export function ProfileHub({ userId, userEmail }: ProfileHubProps) {
   }, [userId]);
 
   const isSeller = profile?.store_type === "wholesale";
-  const isBuyer = profile?.store_type === "retail";
-  const isActive = profile?.status === "active";
+  const canUploadProducts =
+    isProductListingAccount(profile?.store_type) && canSell(profile?.status);
   const displayName = profile?.full_name || profile?.store_name || "User";
 
   const menuSections = useMemo(
@@ -89,7 +91,7 @@ export function ProfileHub({ userId, userEmail }: ProfileHubProps) {
       {
         title: "Commerce",
         items: [
-          ...(isSeller && isActive
+          ...(canUploadProducts
             ? [{ href: "/product-upload", label: "Upload Product" }]
             : []),
           ...(isSeller
@@ -99,7 +101,7 @@ export function ProfileHub({ userId, userEmail }: ProfileHubProps) {
                 { href: "/advertise-product", label: "Advertise Product" },
               ]
             : []),
-          ...(isBuyer ? [{ href: "/orders", label: "My Orders" }] : []),
+          { href: "/orders", label: "My Orders" },
         ],
       },
       {
@@ -116,12 +118,12 @@ export function ProfileHub({ userId, userEmail }: ProfileHubProps) {
           { href: "/content-creator-referral", label: "Content Creator Referral" },
           { href: "/support", label: "Support" },
           { href: "/about", label: "About" },
-          { href: LINKS.privacyPolicy, label: "Privacy Policy", external: true },
-          { href: LINKS.termsAndConditions, label: "Terms & Conditions", external: true },
+          { href: LINKS.privacyPolicy, label: "Privacy Policy" },
+          { href: LINKS.termsAndConditions, label: "Terms & Conditions" },
         ],
       },
     ],
-    [isSeller, isBuyer, isActive]
+    [isSeller, canUploadProducts]
   );
 
   const handleSaveName = async () => {

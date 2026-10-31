@@ -58,27 +58,29 @@ export function buildShellProfile(user: User): UserProfile {
   };
 }
 
+/**
+ * Authenticated checkout: any store_type may order unless frozen.
+ * Future guest web checkout (phone OTP) can pass `guestVerified: true`
+ * without a profile — keep that path separate from this helper’s default.
+ */
 export function canPlaceOrders(
-  profile: Pick<UserProfile, "store_type" | "status"> | null
+  profile: Pick<UserProfile, "store_type" | "status"> | null,
+  options?: { guestVerified?: boolean }
 ): boolean {
+  if (options?.guestVerified) return true;
   if (!profile) return false;
-  if (profile.store_type !== "retail") return false;
-  if (profile.status && profile.status !== "active") return false;
+  if (profile.status === "freeze") return false;
   return true;
 }
 
 export function getOrderBlockReason(
-  profile: Pick<UserProfile, "store_type" | "status"> | null
+  profile: Pick<UserProfile, "store_type" | "status"> | null,
+  options?: { guestVerified?: boolean }
 ): string | null {
-  if (!profile) return "Sign in with a retail account to place orders.";
-  if (profile.store_type === "wholesale") {
-    return "Wholesale accounts sell products. Only retail accounts can place orders.";
-  }
+  if (options?.guestVerified) return null;
+  if (!profile) return "Sign in to place orders.";
   if (profile.status === "freeze") {
     return "Your account is frozen. You cannot place orders right now.";
-  }
-  if (profile.status === "restricted") {
-    return "Your account is restricted. You cannot place orders right now.";
   }
   return null;
 }

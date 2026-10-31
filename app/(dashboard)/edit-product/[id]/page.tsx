@@ -7,5 +7,7 @@ export default async function EditProductPage({ params }: Props) {
   const { id } = await params;
   const { profile } = await getAuthSession();
   if (!profile) return null;
-  return <ProductUploadForm sellerId={profile.id} productId={id} />;
+  return (
+    <ProductUploadForm sellerId={profile.id} productId={id} profile={profile} />
+  );
 }

@@ -17,13 +17,13 @@ const navItems: NavItem[] = [
   { href: "/messages", label: "Messages", icon: "💬" },
   { href: "/notifications", label: "Notifications", icon: "🔔" },
   { href: "/hub", label: "Hub", icon: "📋" },
-  { href: "/orders", label: "My Orders", icon: "📦", roles: ["retail"] },
+  { href: "/orders", label: "My Orders", icon: "📦" },
   { href: "/sales", label: "Sales Orders", icon: "💰", roles: ["wholesale"] },
   {
     href: "/product-upload",
     label: "Upload Product",
     icon: "➕",
-    roles: ["wholesale"],
+    roles: ["wholesale", "retail"],
     sellerOnly: true,
   },
   {
@@ -123,7 +123,9 @@ export function DashboardShell({ children, profile }: DashboardShellProps) {
                   : "bg-amber-50 text-amber-700"
               }`}
             >
-              Your account is {profile.status}. Some actions may be limited.
+              {profile.status === "freeze"
+                ? "Your account is frozen. Orders, selling, and messaging are disabled. Contact support."
+                : "Your account is restricted. Selling is disabled until verification; browsing and orders still work."}
             </div>
           )}
           {children}

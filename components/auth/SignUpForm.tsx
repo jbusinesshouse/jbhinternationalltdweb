@@ -364,23 +364,16 @@ export function SignUpForm() {
         />
         <span>
           By checking the box, you agree to our{" "}
-          <a
-            href={LINKS.privacyPolicy}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-primary hover:underline"
-          >
+          <Link href={LINKS.privacyPolicy} className="text-primary hover:underline">
             Privacy Policy
-          </a>{" "}
+          </Link>{" "}
           and{" "}
-          <a
+          <Link
             href={LINKS.termsAndConditions}
-            target="_blank"
-            rel="noopener noreferrer"
             className="text-primary hover:underline"
           >
             Terms & Conditions
-          </a>
+          </Link>
           .
         </span>
       </label>

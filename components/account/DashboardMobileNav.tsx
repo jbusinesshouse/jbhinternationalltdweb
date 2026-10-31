@@ -18,13 +18,13 @@ const navItems: NavItem[] = [
   { href: "/messages", label: "Messages", icon: "💬" },
   { href: "/notifications", label: "Notifications", icon: "🔔" },
   { href: "/hub", label: "Hub", icon: "📋" },
-  { href: "/orders", label: "My Orders", icon: "📦", roles: ["retail"] },
+  { href: "/orders", label: "My Orders", icon: "📦" },
   { href: "/sales", label: "Sales Orders", icon: "💰", roles: ["wholesale"] },
   {
     href: "/product-upload",
     label: "Upload Product",
     icon: "➕",
-    roles: ["wholesale"],
+    roles: ["wholesale", "retail"],
     sellerOnly: true,
   },
   {

@@ -22,9 +22,19 @@ export function SearchBar({
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     const trimmed = query.trim();
-    if (trimmed) {
-      router.push(`/search?q=${encodeURIComponent(trimmed)}`);
+    if (!trimmed) return;
+    // Preserve storeType filter when re-searching from the results page.
+    const params = new URLSearchParams();
+    params.set("q", trimmed);
+    if (typeof window !== "undefined") {
+      const current = new URLSearchParams(window.location.search).get(
+        "storeType"
+      );
+      if (current === "retail" || current === "wholesale") {
+        params.set("storeType", current);
+      }
     }
+    router.push(`/search?${params.toString()}`);
   };
 
   const sizeClasses = size === "sm" ? "py-2 text-sm" : "py-3 text-base";

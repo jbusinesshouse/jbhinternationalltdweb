@@ -18,10 +18,9 @@ export const BRAND = {
 } as const;
 
 export const LINKS = {
-  privacyPolicy:
-    "https://sites.google.com/view/jbhinternational-privacypolicy?usp=sharing",
-  termsAndConditions:
-    "https://sites.google.com/view/termcondition-jbhinternational?usp=sharing",
+  /** Hosted on this site (see /privacy-policy and /terms). */
+  privacyPolicy: "/privacy-policy",
+  termsAndConditions: "/terms",
   playStore:
     "https://play.google.com/store/apps/details?id=com.jbh.internationallimited",
 } as const;

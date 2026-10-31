@@ -9,7 +9,6 @@ const PROTECTED_PREFIXES = [
   "/hub",
   "/orders",
   "/sales",
-  "/checkout",
   "/product-upload",
   "/edit-product",
   "/advertise-product",

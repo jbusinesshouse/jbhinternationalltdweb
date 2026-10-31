@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import {
@@ -19,6 +20,7 @@ import {
 } from "@/lib/deliveryAddresses";
 import { canPlaceOrders, getOrderBlockReason } from "@/lib/profile";
 import type { UserProfile } from "@/lib/auth";
+import { placeGuestOrder, requestGuestOrderOtp } from "@/lib/api";
 import { supabase } from "@/lib/supabase/browser";
 
 type AddressMode = "store" | "saved" | "custom";
@@ -26,10 +28,15 @@ type AddressMode = "store" | "saved" | "custom";
 const inputClass =
   "w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm text-foreground placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20";
 
-export function CheckoutForm({ profile }: { profile: UserProfile }) {
+export function CheckoutForm({
+  profile,
+}: {
+  profile: UserProfile | null;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const dataParam = searchParams.get("data");
+  const isGuest = !profile;
 
   const parsed = useMemo(() => {
     if (!dataParam) return null;
@@ -41,13 +48,15 @@ export function CheckoutForm({ profile }: { profile: UserProfile }) {
   }, [dataParam]);
 
   const [form, setForm] = useState({
-    full_name: profile.full_name ?? "",
-    phone: profile.phone ?? "",
-    email: profile.email ?? "",
+    full_name: profile?.full_name ?? "",
+    phone: profile?.phone ?? "",
+    email: profile?.email ?? "",
   });
-  const [addressMode, setAddressMode] = useState<AddressMode>("store");
+  const [addressMode, setAddressMode] = useState<AddressMode>(
+    isGuest ? "custom" : "store"
+  );
   const [savedAddresses, setSavedAddresses] = useState<DeliveryAddress[]>([]);
-  const [addressesLoading, setAddressesLoading] = useState(true);
+  const [addressesLoading, setAddressesLoading] = useState(!isGuest);
   const [selectedSavedId, setSelectedSavedId] = useState<string | null>(null);
   const [customForm, setCustomForm] = useState<AddressFormValues>(
     emptyAddressForm()
@@ -56,22 +65,24 @@ export function CheckoutForm({ profile }: { profile: UserProfile }) {
   const [setCustomAsDefault, setSetCustomAsDefault] = useState(false);
   const [defaultDeliveryAddressId, setDefaultDeliveryAddressId] = useState<
     string | null
-  >(profile.default_delivery_address_id ?? null);
+  >(profile?.default_delivery_address_id ?? null);
   const [submitting, setSubmitting] = useState(false);
+  const [otpSending, setOtpSending] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [debugOtp, setDebugOtp] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
 
-  const orderBlockReason = getOrderBlockReason(profile);
+  const orderBlockReason = profile ? getOrderBlockReason(profile) : null;
 
   useEffect(() => {
+    if (!profile?.id) return;
     let cancelled = false;
 
     const load = async () => {
-      const userId = profile.id;
-      if (!userId) return;
-
       setAddressesLoading(true);
       try {
-        const rows = await listDeliveryAddresses(userId);
+        const rows = await listDeliveryAddresses(profile.id);
         if (cancelled) return;
         setSavedAddresses(rows);
 
@@ -79,15 +90,12 @@ export function CheckoutForm({ profile }: { profile: UserProfile }) {
         setDefaultDeliveryAddressId(defaultId);
 
         if (defaultId) {
-          const match = rows.find((r) => r.id === defaultId);
+          const match = rows.find((a) => a.id === defaultId);
           if (match) {
             setAddressMode("saved");
             setSelectedSavedId(defaultId);
           }
-        } else if (
-          !profile.district ||
-          !profile.address
-        ) {
+        } else if (!profile.district || !profile.address) {
           if (rows.length > 0) {
             setAddressMode("saved");
             setSelectedSavedId(rows[0].id);
@@ -100,11 +108,11 @@ export function CheckoutForm({ profile }: { profile: UserProfile }) {
       }
     };
 
-    load();
+    void load();
     return () => {
       cancelled = true;
     };
-  }, [profile.id, profile.default_delivery_address_id, profile.district, profile.address]);
+  }, [profile]);
 
   const lineItems = useMemo(() => {
     if (!parsed) return [];
@@ -141,26 +149,24 @@ export function CheckoutForm({ profile }: { profile: UserProfile }) {
   );
 
   const storeSnapshot = useMemo(() => {
-    if (!profile.district || !profile.address) return null;
+    if (!profile?.district || !profile?.address) return null;
     return toOrderDeliverySnapshot({
       district: profile.district ?? "",
       upazila: profile.upazila,
       address: profile.address ?? "",
     });
-  }, [profile.district, profile.upazila, profile.address]);
+  }, [profile?.district, profile?.upazila, profile?.address]);
 
   const resolveDeliverySnapshot = (): {
     city: string;
     delivery_address: string;
   } | null => {
     if (addressMode === "store") return storeSnapshot;
-
     if (addressMode === "saved") {
       const selected = savedAddresses.find((a) => a.id === selectedSavedId);
       if (!selected) return null;
       return toOrderDeliverySnapshot(selected);
     }
-
     if (!customForm.district.trim() || !customForm.address.trim()) return null;
     return toOrderDeliverySnapshot(customForm);
   };
@@ -176,11 +182,29 @@ export function CheckoutForm({ profile }: { profile: UserProfile }) {
     );
   }
 
+  const handleSendOtp = async () => {
+    setFormError(null);
+    if (!form.phone.trim()) {
+      setFormError("Enter your mobile number to receive an OTP.");
+      return;
+    }
+    setOtpSending(true);
+    try {
+      const res = await requestGuestOrderOtp(form.phone.trim());
+      setOtpSent(true);
+      setDebugOtp(res.debugOtp ?? null);
+    } catch (err: unknown) {
+      setFormError(err instanceof Error ? err.message : "Could not send OTP.");
+    } finally {
+      setOtpSending(false);
+    }
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setFormError(null);
 
-    if (!canPlaceOrders(profile)) {
+    if (profile && !canPlaceOrders(profile)) {
       setFormError(
         orderBlockReason ?? "You cannot place orders with this account."
       );
@@ -190,64 +214,107 @@ export function CheckoutForm({ profile }: { profile: UserProfile }) {
       setFormError("Select quantity first.");
       return;
     }
+    if (!form.full_name.trim() || !form.phone.trim()) {
+      setFormError("Name and phone are required.");
+      return;
+    }
 
     const delivery = resolveDeliverySnapshot();
     if (!delivery) {
-      if (addressMode === "store") {
-        setFormError(
-          "Your store address is incomplete. Use a saved or new address."
-        );
-      } else if (addressMode === "saved") {
-        setFormError("Please select a saved delivery address.");
-      } else {
-        setFormError("District and address are required.");
-      }
+      setFormError(
+        addressMode === "custom"
+          ? "District and address are required."
+          : "Please choose a valid delivery address."
+      );
+      return;
+    }
+
+    if (isGuest && !otp.trim()) {
+      setFormError("Enter the SMS verification code to confirm your order.");
       return;
     }
 
     setSubmitting(true);
-
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) {
-        setFormError("Please sign in to place an order.");
-        setSubmitting(false);
+      const guestItems = lineItems.map((i) => ({
+        variant_id: i.variant_id,
+        size_id: i.size_id,
+        quantity: i.quantity,
+      }));
+
+      if (isGuest) {
+        const result = await placeGuestOrder({
+          phone: form.phone.trim(),
+          otp: otp.trim(),
+          full_name: form.full_name.trim(),
+          email: form.email.trim() || null,
+          city: delivery.city,
+          address: delivery.delivery_address,
+          product_id: parsed.product.id,
+          items: guestItems,
+        });
+        router.push(
+          `/order-confirmation?orderId=${encodeURIComponent(result.orderId)}&phone=${encodeURIComponent(form.phone.trim())}`
+        );
         return;
       }
 
-      if (addressMode === "custom" && saveCustomAddress) {
-        const created = await createDeliveryAddress(user.id, customForm);
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        setFormError(
+          "Session expired. Please sign in again or continue as guest with OTP."
+        );
+        return;
+      }
+
+      if (addressMode === "custom" && saveCustomAddress && profile) {
+        const created = await createDeliveryAddress(profile.id, customForm);
         setSavedAddresses((prev) => [created, ...prev]);
         if (setCustomAsDefault) {
-          await setDefaultDeliveryAddress(user.id, created.id);
+          await setDefaultDeliveryAddress(profile.id, created.id);
           setDefaultDeliveryAddressId(created.id);
         }
       }
 
-      const { data: sellerRow } = await supabase
-        .from("products")
-        .select("seller_id")
-        .eq("id", parsed.product.id)
-        .single();
+      const idempotencyKey =
+        globalThis.crypto?.randomUUID?.() ??
+        `web_${Date.now()}_${Math.random().toString(36).slice(2)}`;
 
-      const { data, error } = await supabase.rpc("place_order", {
-        p_product_id: parsed.product.id,
-        p_seller_id: sellerRow?.seller_id,
-        p_full_name: form.full_name,
-        p_phone: form.phone,
-        p_email: form.email || null,
-        p_city: delivery.city,
-        p_delivery_address: delivery.delivery_address,
-        p_items: lineItems,
-      });
-
-      if (error) {
-        setFormError(error.message);
-        return;
+      const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "").replace(/\/$/, "");
+      if (!API_URL) {
+        throw new Error(
+          "API URL is not configured. Set NEXT_PUBLIC_API_URL in .env.local"
+        );
       }
-      router.push(`/orders/${data?.order_id ?? data}`);
+
+      const res = await fetch(`${API_URL}/orders`, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+          "Idempotency-Key": idempotencyKey,
+        },
+        body: JSON.stringify({
+          full_name: form.full_name.trim(),
+          phone: form.phone.trim(),
+          email: form.email.trim() || null,
+          city: delivery.city,
+          address: delivery.delivery_address,
+          product_id: parsed.product.id,
+          items: guestItems,
+        }),
+      });
+      const json = (await res.json().catch(() => null)) as {
+        orderId?: string;
+        error?: string;
+      } | null;
+      if (!res.ok) {
+        throw new Error(json?.error || `Request failed (${res.status})`);
+      }
+      router.push(`/orders/${json?.orderId}`);
     } catch (err: unknown) {
       setFormError(
         err instanceof Error ? err.message : "Could not place order."
@@ -266,10 +333,27 @@ export function CheckoutForm({ profile }: { profile: UserProfile }) {
 
   return (
     <div>
-      <PageHeader title="Checkout" description="Confirm your order" />
+      <PageHeader
+        title="Checkout"
+        description={
+          isGuest
+            ? "Order with your phone — no account required"
+            : "Confirm your order"
+        }
+      />
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {isGuest && (
+              <p className="rounded-lg border border-border bg-surface/60 px-3 py-2 text-sm text-muted">
+                We’ll send a one-time SMS code to confirm your order.{" "}
+                <Link href="/sign-in" className="font-semibold text-primary">
+                  Sign in
+                </Link>{" "}
+                if you already have an account.
+              </p>
+            )}
+
             <h3 className="font-semibold text-foreground">Contact</h3>
             {(["full_name", "phone", "email"] as const).map((key) => (
               <input
@@ -279,7 +363,7 @@ export function CheckoutForm({ profile }: { profile: UserProfile }) {
                   key === "full_name"
                     ? "Full name *"
                     : key === "phone"
-                      ? "Phone number *"
+                      ? "Mobile number * (01XXXXXXXXX)"
                       : "Email (optional)"
                 }
                 value={form[key]}
@@ -290,32 +374,68 @@ export function CheckoutForm({ profile }: { profile: UserProfile }) {
               />
             ))}
 
-            <h3 className="font-semibold text-foreground">Delivery address</h3>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setAddressMode("store")}
-                className={chipClass("store")}
-              >
-                Store
-              </button>
-              <button
-                type="button"
-                onClick={() => setAddressMode("saved")}
-                className={chipClass("saved")}
-              >
-                Saved
-              </button>
-              <button
-                type="button"
-                onClick={() => setAddressMode("custom")}
-                className={chipClass("custom")}
-              >
-                New
-              </button>
-            </div>
+            {isGuest && (
+              <div className="space-y-3 rounded-xl border border-border p-4">
+                <h3 className="font-semibold text-foreground">
+                  SMS verification
+                </h3>
+                <p className="text-sm text-muted">
+                  Confirm your number before we place the order.
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={otpSending || !form.phone.trim()}
+                  onClick={() => void handleSendOtp()}
+                >
+                  {otpSending
+                    ? "Sending…"
+                    : otpSent
+                      ? "Resend OTP"
+                      : "Send OTP"}
+                </Button>
+                {otpSent && (
+                  <input
+                    required
+                    inputMode="numeric"
+                    placeholder="Enter 6-digit OTP *"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                    className={inputClass}
+                  />
+                )}
+                {debugOtp && (
+                  <p className="text-xs text-amber-700">
+                    Dev OTP (SMS gateway not configured):{" "}
+                    <span className="font-mono font-semibold">{debugOtp}</span>
+                  </p>
+                )}
+              </div>
+            )}
 
-            {addressMode === "store" && (
+            <h3 className="font-semibold text-foreground">Delivery address</h3>
+            {!isGuest && (
+              <div className="flex gap-2">
+                {(
+                  [
+                    ["store", "Store"],
+                    ["saved", "Saved"],
+                    ["custom", "New"],
+                  ] as const
+                ).map(([mode, label]) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => setAddressMode(mode)}
+                    className={chipClass(mode)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {!isGuest && addressMode === "store" && (
               <div className="rounded-xl border border-border bg-surface/50 p-4">
                 {storeSnapshot ? (
                   <>
@@ -324,28 +444,11 @@ export function CheckoutForm({ profile }: { profile: UserProfile }) {
                     </p>
                     <p className="mt-1 text-sm text-muted">
                       {formatDeliveryAddressLine({
-                        district: profile.district,
-                        upazila: profile.upazila,
-                        address: profile.address,
+                        district: profile?.district,
+                        upazila: profile?.upazila,
+                        address: profile?.address,
                       })}
                     </p>
-                    {defaultDeliveryAddressId ? (
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          const userId = profile.id;
-                          await setDefaultDeliveryAddress(userId, null);
-                          setDefaultDeliveryAddressId(null);
-                        }}
-                        className="mt-3 text-sm font-semibold text-primary hover:underline"
-                      >
-                        Set store address as default
-                      </button>
-                    ) : (
-                      <p className="mt-2 text-xs font-semibold text-primary">
-                        Your default delivery address
-                      </p>
-                    )}
                   </>
                 ) : (
                   <p className="text-sm text-muted">
@@ -356,7 +459,7 @@ export function CheckoutForm({ profile }: { profile: UserProfile }) {
               </div>
             )}
 
-            {addressMode === "saved" && (
+            {!isGuest && addressMode === "saved" && (
               <div className="space-y-3">
                 {addressesLoading ? (
                   <div className="h-20 animate-pulse rounded-xl bg-surface" />
@@ -376,7 +479,6 @@ export function CheckoutForm({ profile }: { profile: UserProfile }) {
                 ) : (
                   savedAddresses.map((addr) => {
                     const selected = selectedSavedId === addr.id;
-                    const isDefault = defaultDeliveryAddressId === addr.id;
                     return (
                       <button
                         key={addr.id}
@@ -388,36 +490,12 @@ export function CheckoutForm({ profile }: { profile: UserProfile }) {
                             : "border-border bg-white hover:border-primary/40"
                         }`}
                       >
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="font-semibold text-foreground">
-                            {addr.label?.trim() || "Saved address"}
-                          </p>
-                          {isDefault && (
-                            <span className="text-xs font-semibold text-primary">
-                              Default
-                            </span>
-                          )}
-                        </div>
+                        <p className="font-semibold text-foreground">
+                          {addr.label?.trim() || "Saved address"}
+                        </p>
                         <p className="mt-1 text-sm text-muted">
                           {formatDeliveryAddressLine(addr)}
                         </p>
-                        {selected && !isDefault && (
-                          <span
-                            role="button"
-                            onClick={async (e) => {
-                              e.stopPropagation();
-                              const userId = profile.id;
-                              await setDefaultDeliveryAddress(
-                                userId,
-                                addr.id
-                              );
-                              setDefaultDeliveryAddressId(addr.id);
-                            }}
-                            className="mt-2 block text-sm font-semibold text-primary hover:underline"
-                          >
-                            Set as default
-                          </span>
-                        )}
                       </button>
                     );
                   })
@@ -425,10 +503,10 @@ export function CheckoutForm({ profile }: { profile: UserProfile }) {
               </div>
             )}
 
-            {addressMode === "custom" && (
+            {(isGuest || addressMode === "custom") && (
               <div className="rounded-xl border border-border p-4">
                 <p className="font-semibold text-foreground">
-                  New delivery address
+                  Delivery address
                 </p>
                 <div className="mt-3">
                   <DeliveryAddressFormFields
@@ -436,33 +514,37 @@ export function CheckoutForm({ profile }: { profile: UserProfile }) {
                     onChange={setCustomForm}
                   />
                 </div>
-
-                <label className="mt-4 flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    checked={saveCustomAddress}
-                    onChange={(e) => setSaveCustomAddress(e.target.checked)}
-                    className="h-4 w-4 rounded border-border text-primary focus:ring-primary/20"
-                  />
-                  <span className="text-sm text-foreground">
-                    Save this address for next time
-                  </span>
-                </label>
-
-                {saveCustomAddress && (
-                  <label className="mt-3 flex items-center gap-3">
-                    <input
-                      type="checkbox"
-                      checked={setCustomAsDefault}
-                      onChange={(e) =>
-                        setSetCustomAsDefault(e.target.checked)
-                      }
-                      className="h-4 w-4 rounded border-border text-primary focus:ring-primary/20"
-                    />
-                    <span className="text-sm text-foreground">
-                      Set as my default delivery address
-                    </span>
-                  </label>
+                {!isGuest && (
+                  <>
+                    <label className="mt-4 flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        checked={saveCustomAddress}
+                        onChange={(e) =>
+                          setSaveCustomAddress(e.target.checked)
+                        }
+                        className="h-4 w-4 rounded border-border text-primary focus:ring-primary/20"
+                      />
+                      <span className="text-sm text-foreground">
+                        Save this address for next time
+                      </span>
+                    </label>
+                    {saveCustomAddress && (
+                      <label className="mt-3 flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          checked={setCustomAsDefault}
+                          onChange={(e) =>
+                            setSetCustomAsDefault(e.target.checked)
+                          }
+                          className="h-4 w-4 rounded border-border text-primary focus:ring-primary/20"
+                        />
+                        <span className="text-sm text-foreground">
+                          Set as my default delivery address
+                        </span>
+                      </label>
+                    )}
+                  </>
                 )}
               </div>
             )}
@@ -473,8 +555,16 @@ export function CheckoutForm({ profile }: { profile: UserProfile }) {
               </p>
             )}
 
-            <Button type="submit" disabled={submitting} className="w-full">
-              {submitting ? "Placing order…" : "Confirm Order"}
+            <Button
+              type="submit"
+              disabled={submitting || (isGuest && !otpSent)}
+              className="w-full"
+            >
+              {submitting
+                ? "Placing order…"
+                : isGuest
+                  ? "Verify & place order"
+                  : "Confirm Order"}
             </Button>
           </form>
         </Card>
@@ -489,14 +579,15 @@ export function CheckoutForm({ profile }: { profile: UserProfile }) {
                   {item.product_name_snapshot} × {item.quantity}
                 </span>
                 <span>
-                  BDT {(item.price_snapshot * item.quantity).toFixed(2)}
+                  BDT {(item.price_snapshot * item.quantity).toFixed(0)}
                 </span>
               </div>
             ))}
           </div>
           <p className="mt-4 text-xl font-bold text-foreground">
-            Total: BDT {total.toFixed(2)}
+            Total: BDT {total.toFixed(0)}
           </p>
+          <p className="mt-1 text-xs text-muted">Prices include VAT</p>
         </Card>
       </div>
     </div>
