@@ -92,7 +92,7 @@ export function DeliveryAddressSection({
 
   const handleCreate = async () => {
     if (!form.district.trim() || !form.address.trim()) {
-      setFormError("District and address are required.");
+      setFormError("জেলা ও ঠিকানা দিতে হবে।");
       return;
     }
     setFormError(null);
@@ -104,7 +104,7 @@ export function DeliveryAddressSection({
       setShowForm(false);
     } catch (e: unknown) {
       setFormError(
-        e instanceof Error ? e.message : "Could not save address."
+        e instanceof Error ? e.message : "ঠিকানা সেভ করা যায়নি।"
       );
     } finally {
       setSaving(false);
@@ -136,28 +136,27 @@ export function DeliveryAddressSection({
   return (
     <div>
       <p className="mt-1 text-sm text-muted">
-        Choose where orders should be delivered. Your store address stays for
-        your business profile.
+        অর্ডার কোথায় ডেলিভারি হবে তা বেছে নিন। আপনার দোকানের ঠিকানা ব্যবসার প্রোফাইলে আলাদাভাবে থাকবে।
       </p>
 
       {/* Store address card */}
       <div
-        className={`mt-4 rounded-xl border p-4 transition-colors ${
+        className={`mt-4 rounded-2xl border-2 p-4 transition-colors ${
           defaultId == null
-            ? "border-primary bg-primary/5"
-            : "border-border bg-surface/50"
+            ? "border-primary bg-primary-soft"
+            : "border-border bg-surface"
         }`}
       >
         <div className="flex items-center justify-between gap-2">
-          <p className="font-semibold text-foreground">Store address</p>
+          <p className="font-bold">দোকানের ঠিকানা</p>
           {defaultId == null && (
             <span className="rounded-full bg-primary px-2.5 py-0.5 text-xs font-semibold text-primary-ink">
-              Default
+              ডিফল্ট
             </span>
           )}
         </div>
         <p className="mt-1 text-sm text-muted">
-          {storeLine || "No store address set"}
+          {storeLine || "দোকানের ঠিকানা দেওয়া নেই"}
         </p>
         {defaultId != null && (
           <button
@@ -166,7 +165,7 @@ export function DeliveryAddressSection({
             disabled={saving}
             className="mt-3 text-sm font-semibold text-primary-strong hover:underline disabled:opacity-50"
           >
-            Set as default delivery
+            ডিফল্ট ডেলিভারি করুন
           </button>
         )}
       </div>
@@ -194,11 +193,11 @@ export function DeliveryAddressSection({
             >
               <div className="flex items-center justify-between gap-2">
                 <p className="font-semibold text-foreground">
-                  {addr.label?.trim() || "Saved address"}
+                  {addr.label?.trim() || "সেভ করা ঠিকানা"}
                 </p>
                 {isDefault && (
                   <span className="rounded-full bg-primary px-2.5 py-0.5 text-xs font-semibold text-primary-ink">
-                    Default
+                    ডিফল্ট
                   </span>
                 )}
               </div>
@@ -213,7 +212,7 @@ export function DeliveryAddressSection({
                     disabled={saving}
                     className="text-sm font-semibold text-primary-strong hover:underline disabled:opacity-50"
                   >
-                    Set as default
+                    ডিফল্ট করুন
                   </button>
                 ) : (
                   <span />
@@ -222,9 +221,9 @@ export function DeliveryAddressSection({
                   type="button"
                   onClick={() => setDeleteTarget(addr)}
                   disabled={saving}
-                  className="text-sm font-semibold text-red-600 hover:underline disabled:opacity-50"
+                  className="text-sm font-semibold text-[#B42318] hover:underline disabled:opacity-50"
                 >
-                  Delete
+                  মুছুন
                 </button>
               </div>
             </div>
@@ -233,30 +232,30 @@ export function DeliveryAddressSection({
       )}
 
       {showForm ? (
-        <div className="mt-4 rounded-xl border border-border bg-white p-4">
-          <p className="font-semibold text-foreground">New delivery address</p>
+        <div className="mt-4 rounded-2xl border border-border bg-white p-4">
+          <p className="font-bold">নতুন ডেলিভারি ঠিকানা</p>
           <div className="mt-3">
             <DeliveryAddressFormFields values={form} onChange={setForm} />
           </div>
           {formError && (
-            <p className="mt-2 text-sm text-red-600">{formError}</p>
+            <p className="mt-2 text-sm text-[#B42318]">{formError}</p>
           )}
           <div className="mt-4 flex gap-3">
             <button
               type="button"
               onClick={closeForm}
               disabled={saving}
-              className="flex-1 rounded-lg bg-surface px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-border disabled:opacity-50"
+              className="h-11 flex-1 rounded-xl border-[1.5px] border-[#D1D5DB] bg-white px-4 text-sm font-bold text-foreground transition-colors hover:border-primary disabled:opacity-50"
             >
-              Cancel
+              বাতিল
             </button>
             <button
               type="button"
               onClick={handleCreate}
               disabled={saving}
-              className="flex-1 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-ink transition-colors hover:bg-primary-dark disabled:opacity-50"
+              className="h-11 flex-1 rounded-xl bg-primary px-4 text-sm font-bold text-primary-ink transition-colors hover:bg-primary-dark disabled:opacity-50"
             >
-              {saving ? "Saving…" : "Save address"}
+              {saving ? "সেভ হচ্ছে…" : "ঠিকানা সেভ করুন"}
             </button>
           </div>
         </div>
@@ -264,17 +263,17 @@ export function DeliveryAddressSection({
         <button
           type="button"
           onClick={() => setShowForm(true)}
-          className="mt-4 w-full rounded-xl border border-dashed border-primary bg-primary/5 px-4 py-3 text-sm font-semibold text-primary-strong transition-colors hover:bg-primary/10"
+          className="mt-4 w-full rounded-2xl border-2 border-dashed border-primary bg-primary-soft px-4 py-3 text-sm font-bold text-primary-strong transition-colors hover:bg-[#FFE9D5]"
         >
-          + Add delivery address
+          + ডেলিভারি ঠিকানা যোগ করুন
         </button>
       )}
 
       <ConfirmDialog
         open={deleteTarget !== null}
-        title="Delete this address?"
-        description="This saved delivery address will be permanently removed."
-        confirmLabel="Delete"
+        title="ঠিকানাটি মুছবেন?"
+        description="সেভ করা এই ডেলিভারি ঠিকানাটি স্থায়ীভাবে মুছে যাবে।"
+        confirmLabel="মুছুন"
         variant="danger"
         loading={saving}
         onConfirm={handleDelete}

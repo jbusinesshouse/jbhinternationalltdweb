@@ -33,7 +33,7 @@ function toolbarButtonClass(active: boolean) {
 export function RichTextEditor({
   value,
   onChange,
-  placeholder = "Enter description...",
+  placeholder = "পণ্যের বিবরণ লিখুন...",
 }: RichTextEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const syncingRef = useRef(false);
@@ -137,17 +137,17 @@ export function RichTextEditor({
           className={toolbarButtonClass(toolbar.unorderedList)}
           onMouseDown={handleToolbarMouseDown}
           onClick={() => exec("insertUnorderedList")}
-          aria-label="Bullet list"
+          aria-label="বুলেট তালিকা"
           aria-pressed={toolbar.unorderedList}
         >
-          • List
+          • তালিকা
         </button>
         <button
           type="button"
           className={toolbarButtonClass(toolbar.orderedList)}
           onMouseDown={handleToolbarMouseDown}
           onClick={() => exec("insertOrderedList")}
-          aria-label="Numbered list"
+          aria-label="নম্বর তালিকা"
           aria-pressed={toolbar.orderedList}
         >
           1. List

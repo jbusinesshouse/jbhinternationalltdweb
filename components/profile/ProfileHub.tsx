@@ -45,13 +45,13 @@ export function ProfileHub({ userId, userEmail }: ProfileHubProps) {
       );
       data = res.profile;
     } catch (err) {
-      setLoadError(err instanceof Error ? err.message : "You are not signed in.");
+      setLoadError(err instanceof Error ? err.message : "আপনি সাইন ইন করা নেই।");
       setLoading(false);
       return;
     }
 
     if (!data) {
-      setLoadError("Profile not found.");
+      setLoadError("প্রোফাইল পাওয়া যায়নি।");
       setLoading(false);
       return;
     }
@@ -70,46 +70,46 @@ export function ProfileHub({ userId, userEmail }: ProfileHubProps) {
   const isSeller = profile?.store_type === "wholesale";
   const canUploadProducts =
     isProductListingAccount(profile?.store_type) && canSell(profile?.status);
-  const displayName = profile?.full_name || profile?.store_name || "User";
+  const displayName = profile?.full_name || profile?.store_name || "ব্যবহারকারী";
 
   const menuSections = useMemo(
     () => [
       {
-        title: "Account",
-        items: [{ href: "/account", label: "My Account" }],
+        title: "অ্যাকাউন্ট",
+        items: [{ href: "/account", label: "আমার অ্যাকাউন্ট" }],
       },
       {
-        title: "Commerce",
+        title: "কেনাবেচা",
         items: [
           ...(canUploadProducts
-            ? [{ href: "/product-upload", label: "Upload Product" }]
+            ? [{ href: "/product-upload", label: "নতুন পণ্য আপলোড" }]
             : []),
           ...(isSeller
             ? [
-                { href: "/sales", label: "Sales Orders" },
-                { href: "/featured-request", label: "Store Promotion" },
-                { href: "/advertise-product", label: "Advertise Product" },
+                { href: "/sales", label: "বিক্রি ও অর্ডার" },
+                { href: "/featured-request", label: "ফিচার্ড স্টোর" },
+                { href: "/advertise-product", label: "পণ্যের বিজ্ঞাপন" },
               ]
             : []),
-          { href: "/orders", label: "My Orders" },
+          { href: "/orders", label: "আমার অর্ডার" },
         ],
       },
       {
-        title: "Communication",
+        title: "যোগাযোগ",
         items: [
-          { href: "/messages", label: "Messages" },
-          { href: "/notifications", label: "Notifications" },
+          { href: "/messages", label: "মেসেজ" },
+          { href: "/notifications", label: "নোটিফিকেশন" },
         ],
       },
       {
-        title: "More",
+        title: "আরও",
         items: [
-          { href: "/hub", label: "Hub" },
-          { href: "/content-creator-referral", label: "Content Creator Referral" },
-          { href: "/support", label: "Support" },
-          { href: "/about", label: "About" },
-          { href: LINKS.privacyPolicy, label: "Privacy Policy" },
-          { href: LINKS.termsAndConditions, label: "Terms & Conditions" },
+          { href: "/hub", label: "সেলার হাব" },
+          { href: "/content-creator-referral", label: "কনটেন্ট ক্রিয়েটর রেফারেল" },
+          { href: "/support", label: "সাহায্য" },
+          { href: "/about", label: "আমাদের সম্পর্কে" },
+          { href: LINKS.privacyPolicy, label: "প্রাইভেসি পলিসি" },
+          { href: LINKS.termsAndConditions, label: "শর্তাবলী" },
         ],
       },
     ],
@@ -166,7 +166,7 @@ export function ProfileHub({ userId, userEmail }: ProfileHubProps) {
   if (loading) {
     return (
       <Card>
-        <p className="text-sm text-muted">Loading your profile...</p>
+        <p className="text-sm text-muted">প্রোফাইল লোড হচ্ছে...</p>
       </Card>
     );
   }
@@ -174,11 +174,11 @@ export function ProfileHub({ userId, userEmail }: ProfileHubProps) {
   if (loadError || !profile) {
     return (
       <Card>
-        <p className="text-sm text-red-600">
-          {loadError ?? "Could not load your profile."}
+        <p className="text-sm text-[#B42318]">
+          {loadError ?? "প্রোফাইল লোড করা যায়নি।"}
         </p>
         <Button className="mt-4" onClick={() => void loadProfile()}>
-          Try Again
+          আবার চেষ্টা করুন
         </Button>
       </Card>
     );
@@ -200,7 +200,7 @@ export function ProfileHub({ userId, userEmail }: ProfileHubProps) {
     <div>
       <Card className="mb-6">
         <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-start sm:text-left">
-          <label className="relative h-24 w-24 shrink-0 cursor-pointer overflow-hidden rounded-full bg-primary/10">
+          <label className="relative h-24 w-24 shrink-0 cursor-pointer overflow-hidden rounded-full bg-primary-soft">
             {profile.avatar_url ? (
               <Image
                 src={profile.avatar_url}
@@ -221,7 +221,7 @@ export function ProfileHub({ userId, userEmail }: ProfileHubProps) {
               onChange={handleAvatarChange}
             />
             {saving && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/40 text-xs text-white">
+              <div className="absolute inset-0 flex items-center justify-center bg-navy/40 text-xs text-white">
                 ...
               </div>
             )}
@@ -230,7 +230,7 @@ export function ProfileHub({ userId, userEmail }: ProfileHubProps) {
           <div className="flex-1">
             {!editMode ? (
               <>
-                <h2 className="text-xl font-bold">{profile.full_name}</h2>
+                <h2 className="text-xl font-extrabold">{profile.full_name}</h2>
                 <p className="text-sm text-muted">{userEmail}</p>
                 <button
                   type="button"
@@ -240,7 +240,7 @@ export function ProfileHub({ userId, userEmail }: ProfileHubProps) {
                   }}
                   className="mt-2 text-sm font-semibold text-primary-strong hover:underline"
                 >
-                  Edit Name
+                  নাম বদলান
                 </button>
               </>
             ) : (
@@ -248,17 +248,17 @@ export function ProfileHub({ userId, userEmail }: ProfileHubProps) {
                 <input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="rounded-lg border border-border px-3 py-2 text-sm"
+                  className="w-full rounded-xl border-[1.5px] border-[#D1D5DB] bg-white px-4 py-2.5 text-[15px] text-foreground placeholder:text-muted/80 transition-colors focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/20 disabled:bg-surface disabled:text-muted"
                 />
                 <Button size="sm" onClick={handleSaveName} disabled={saving}>
-                  Save
+                  সেভ
                 </Button>
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => setEditMode(false)}
                 >
-                  Cancel
+                  বাতিল
                 </Button>
               </div>
             )}
@@ -269,7 +269,7 @@ export function ProfileHub({ userId, userEmail }: ProfileHubProps) {
       {menuSections.map((section) =>
         section.items.length ? (
           <Card key={section.title} className="mb-4">
-            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">
+            <h3 className="mb-3 text-xs font-bold tracking-[0.08em] text-muted">
               {section.title}
             </h3>
             <div className="divide-y divide-border">
@@ -301,22 +301,22 @@ export function ProfileHub({ userId, userEmail }: ProfileHubProps) {
         ) : null
       )}
 
-      <div className="space-y-3">
+      <div className="flex flex-col gap-3">
         <Button
           variant="outline"
           className="w-full"
           onClick={handleSignOut}
           disabled={signingOut}
         >
-          {signingOut ? "Signing out..." : "Logout"}
+          {signingOut ? "সাইন আউট হচ্ছে..." : "সাইন আউট"}
         </Button>
         <a
           href={APPEAL_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="block w-full rounded-lg border border-red-200 bg-red-50 py-3 text-center text-sm font-semibold text-red-600 hover:bg-red-100"
+          className="block w-full rounded-xl bg-[#FEECEC] py-3 text-center text-sm font-bold text-[#B42318] hover:bg-[#FBD9D9]"
         >
-          Request Account Deletion
+          অ্যাকাউন্ট ডিলিটের অনুরোধ
         </a>
       </div>
     </div>
@@ -375,7 +375,7 @@ function CompleteProfileForm({
       });
     } catch (err) {
       setSaving(false);
-      setError(err instanceof Error ? err.message : "Could not save your profile.");
+      setError(err instanceof Error ? err.message : "প্রোফাইল সেভ করা যায়নি।");
       return;
     }
     setSaving(false);
@@ -383,65 +383,64 @@ function CompleteProfileForm({
   };
 
   const missingFields = [
-    !form.full_name && "Full Name",
-    !form.phone && "Phone",
-    !form.store_name && "Store Name",
-    !form.address && "Address",
-    !form.district && "District",
-    !form.upazila && "Upazila",
+    !form.full_name && "পুরো নাম",
+    !form.phone && "মোবাইল নম্বর",
+    !form.store_name && "দোকানের নাম",
+    !form.address && "ঠিকানা",
+    !form.district && "জেলা",
+    !form.upazila && "উপজেলা",
   ].filter(Boolean);
 
   return (
     <Card>
-      <h2 className="text-xl font-bold">Complete Your Profile</h2>
+      <h2 className="text-xl font-extrabold">প্রোফাইল সম্পূর্ণ করুন</h2>
       <p className="mt-2 text-sm text-muted">
-        A few details are still needed before you can use all features.
+        সব ফিচার ব্যবহার করতে আর কয়েকটি তথ্য দরকার।
       </p>
       {missingFields.length > 0 && (
-        <p className="mt-2 text-sm text-amber-600">
-          Still needed: {missingFields.join(", ")}
+        <p className="mt-2 text-sm text-moq">
+          বাকি আছে: {missingFields.join(", ")}
         </p>
       )}
-      <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+      <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
         {error && (
-          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+          <p role="alert" className="rounded-xl bg-[#FEECEC] px-4 py-3 text-sm font-semibold text-[#B42318]">
             {error}
           </p>
         )}
         {(
           [
-            ["full_name", "Full Name *"],
-            ["phone", "Phone *"],
-            ["store_name", "Store Name *"],
-            ["address", "Address *"],
-            ["district", "District *"],
-            ["upazila", "Upazila *"],
+            ["full_name", "পুরো নাম *"],
+            ["phone", "মোবাইল নম্বর *"],
+            ["store_name", "দোকানের নাম *"],
+            ["address", "ঠিকানা *"],
+            ["district", "জেলা *"],
+            ["upazila", "উপজেলা *"],
           ] as const
         ).map(([key, label]) => (
           <div key={key}>
-            <label className="text-sm font-medium">{label}</label>
+            <label className="text-sm font-bold">{label}</label>
             <input
               required
               value={form[key]}
               onChange={(e) =>
                 setForm((prev) => ({ ...prev, [key]: e.target.value }))
               }
-              className="mt-1 w-full rounded-lg border border-border px-3 py-2"
+              className="mt-1 w-full rounded-xl border-[1.5px] border-[#D1D5DB] bg-white px-4 py-2.5 text-[15px] text-foreground placeholder:text-muted/80 transition-colors focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/20 disabled:bg-surface disabled:text-muted"
             />
           </div>
         ))}
         <div>
-          <label className="text-sm font-medium">Account Type</label>
-          <p className="mt-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm">
-            {form.store_type === "wholesale" ? "Wholesale (Seller)" : "Retail (Buyer)"}
+          <label className="text-sm font-bold">অ্যাকাউন্টের ধরন</label>
+          <p className="mt-1 rounded-xl bg-surface px-4 py-2.5 text-[15px] font-semibold">
+            {form.store_type === "wholesale" ? "পাইকারি · Wholesale" : "খুচরা · Retail"}
           </p>
           <p className="mt-1 text-xs text-muted">
-            Account type is set when you sign up and can’t be changed here. Contact support
-            to change it.
+            অ্যাকাউন্টের ধরন সাইন আপের সময় ঠিক হয় এবং এখান থেকে বদলানো যায় না। বদলাতে চাইলে সাপোর্টে যোগাযোগ করুন।
           </p>
         </div>
         <Button type="submit" disabled={saving} className="w-full">
-          {saving ? "Saving..." : "Save & Continue"}
+          {saving ? "সেভ হচ্ছে..." : "সেভ করে এগিয়ে যান"}
         </Button>
       </form>
     </Card>

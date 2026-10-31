@@ -9,8 +9,8 @@ export default async function AccountPage() {
   return (
     <div>
       <PageHeader
-        title="My Account"
-        description="Your profile details, addresses, and products"
+        title="আমার অ্যাকাউন্ট"
+        description="আপনার প্রোফাইল, ঠিকানা ও পণ্য"
       />
       <AccountDetails profile={profile} />
     </div>

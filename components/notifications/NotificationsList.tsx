@@ -46,7 +46,7 @@ export function NotificationsList({ profile }: { profile: UserProfile }) {
         body: { accept: decision === "accept", notificationId: item.id },
       });
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Could not update the order.");
+      alert(err instanceof Error ? err.message : "অর্ডার আপডেট করা যায়নি।");
     }
     setActingId(null);
     void load();
@@ -59,17 +59,17 @@ export function NotificationsList({ profile }: { profile: UserProfile }) {
 
   return (
     <div>
-      <PageHeader title="Notifications" />
+      <PageHeader title="নোটিফিকেশন" />
       {loading ? (
-        <p className="text-muted">Loading...</p>
+        <p className="text-muted">লোড হচ্ছে...</p>
       ) : items.length === 0 ? (
-        <EmptyState title="No notifications" />
+        <EmptyState title="কোনো নোটিফিকেশন নেই" description="নতুন অর্ডার বা মেসেজ এলে এখানে দেখা যাবে।" />
       ) : (
-        <div className="space-y-3">
+        <div className="flex flex-col gap-3">
           {items.map((item) => (
             <Card
               key={item.id}
-              className={!item.is_read ? "border-primary/40 bg-primary/5" : ""}
+              className={!item.is_read ? "border-primary bg-primary-soft" : ""}
             >
               <div className="flex justify-between gap-3">
                 <div>
@@ -87,7 +87,7 @@ export function NotificationsList({ profile }: { profile: UserProfile }) {
                     onClick={() => markRead(item.id)}
                     className="text-xs text-primary-strong hover:underline"
                   >
-                    Mark read
+                    পড়া হয়েছে
                   </button>
                 )}
               </div>
@@ -99,7 +99,7 @@ export function NotificationsList({ profile }: { profile: UserProfile }) {
                       disabled={actingId === item.id}
                       onClick={() => handleCancelAction(item, "accept")}
                     >
-                      Accept Cancel
+                      বাতিল মেনে নিন
                     </Button>
                     <Button
                       size="sm"
@@ -107,7 +107,7 @@ export function NotificationsList({ profile }: { profile: UserProfile }) {
                       disabled={actingId === item.id}
                       onClick={() => handleCancelAction(item, "reject")}
                     >
-                      Reject
+                      বাতিল চাই না
                     </Button>
                   </div>
                 )}
@@ -116,7 +116,7 @@ export function NotificationsList({ profile }: { profile: UserProfile }) {
                   href={getOrderLink(item.order_id)}
                   className="mt-3 inline-block text-sm text-primary-strong hover:underline"
                 >
-                  View order →
+                  অর্ডার দেখুন →
                 </Link>
               )}
             </Card>

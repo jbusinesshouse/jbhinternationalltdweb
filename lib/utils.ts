@@ -19,28 +19,9 @@ export function isProfileComplete(profile: {
   );
 }
 
-export function getOrderStatusColor(status: string | null | undefined): string {
-  switch (status?.toLowerCase()) {
-    case "completed":
-      return "text-green-600 bg-green-50";
-    case "pending":
-      return "text-amber-600 bg-amber-50";
-    case "processing":
-      return "text-blue-600 bg-blue-50";
-    case "shipped":
-      return "text-indigo-600 bg-indigo-50";
-    case "cancelled":
-      return "text-red-600 bg-red-50";
-    case "hold":
-      return "text-orange-600 bg-orange-50";
-    default:
-      return "text-gray-600 bg-gray-50";
-  }
-}
-
 export function formatDate(iso: string): string {
   try {
-    return new Date(iso).toLocaleDateString("en-BD", {
+    return new Date(iso).toLocaleString("bn-BD", {
       day: "numeric",
       month: "short",
       year: "numeric",
@@ -50,6 +31,11 @@ export function formatDate(iso: string): string {
   } catch {
     return iso;
   }
+}
+
+/** 1375 → "৳১,৩৭৫" */
+export function formatBdt(amount: number): string {
+  return `৳${Math.round(amount).toLocaleString("bn-BD")}`;
 }
 
 export function calcOrderTotal(

@@ -21,22 +21,21 @@ export default async function PublicCheckoutPage() {
   if (!formProfile && !guestEnabled) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center sm:px-6">
-        <h1 className="text-2xl font-bold text-foreground">Sign in to place your order</h1>
+        <h1 className="text-2xl font-extrabold">অর্ডার করতে সাইন ইন করুন</h1>
         <p className="mt-3 text-muted">
-          Create a free account or sign in to complete your order. Your selected items are
-          kept — just come back to this page after signing in.
+          অর্ডার সম্পন্ন করতে বিনামূল্যে অ্যাকাউন্ট খুলুন বা সাইন ইন করুন। তারপর পণ্যের পেজে ফিরে আবার অর্ডার করুন।
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <Button href="/sign-in" size="lg">
-            Sign in
+            সাইন ইন
           </Button>
           <Button href="/sign-up" variant="outline" size="lg">
-            Create account
+            অ্যাকাউন্ট খুলুন
           </Button>
         </div>
         <p className="mt-6 text-sm text-muted">
           <Link href="/products" className="text-primary-strong hover:underline">
-            Continue browsing
+            পণ্য দেখা চালিয়ে যান
           </Link>
         </p>
       </div>
@@ -45,7 +44,7 @@ export default async function PublicCheckoutPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <Suspense fallback={<p>Loading checkout...</p>}>
+      <Suspense fallback={<p>চেকআউট লোড হচ্ছে...</p>}>
         <CheckoutForm profile={formProfile} />
       </Suspense>
     </div>

@@ -48,7 +48,7 @@ export async function uploadProductImageFile(
   if (productId) form.append("productId", productId);
 
   const uploaded = await apiUpload<UploadedProductImage>("/uploads/product-image", form);
-  if (!uploaded?.path || !uploaded?.publicUrl) throw new Error("Image upload failed");
+  if (!uploaded?.path || !uploaded?.publicUrl) throw new Error("ছবি আপলোড করা যায়নি");
   return uploaded;
 }
 

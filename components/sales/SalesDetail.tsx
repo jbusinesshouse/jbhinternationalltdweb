@@ -6,9 +6,16 @@ import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Card, PageHeader, StatusBadge } from "@/components/ui/PageElements";
 import { apiRequest } from "@/lib/api";
-import { calcOrderItemCount, calcOrderTotal, formatDate } from "@/lib/utils";
+import { calcOrderItemCount, calcOrderTotal, formatBdt, formatDate } from "@/lib/utils";
 
 const STATUS_FLOW = ["pending", "processing", "shipped", "completed"] as const;
+
+const STEP_LABEL: Record<string, string> = {
+  pending: "নতুন",
+  processing: "প্রসেসিং",
+  shipped: "শিপড",
+  completed: "সম্পন্ন",
+};
 
 type StatusOption = {
   key: string;
@@ -18,10 +25,10 @@ type StatusOption = {
 };
 
 const STATUS_OPTIONS: StatusOption[] = [
-  { key: "processing", label: "Processing", desc: "Order is being prepared" },
-  { key: "shipped", label: "Shipped", desc: "Order has been dispatched" },
-  { key: "completed", label: "Completed", desc: "Order delivered to customer" },
-  { key: "cancelled", label: "Cancel", desc: "Request cancellation from buyer", danger: true },
+  { key: "processing", label: "প্রসেসিং", desc: "অর্ডার প্রস্তুত করা হচ্ছে" },
+  { key: "shipped", label: "শিপড", desc: "অর্ডার পাঠিয়ে দেওয়া হয়েছে" },
+  { key: "completed", label: "সম্পন্ন", desc: "ক্রেতার কাছে অর্ডার পৌঁছেছে" },
+  { key: "cancelled", label: "বাতিল", desc: "ক্রেতার কাছে বাতিলের অনুরোধ পাঠান", danger: true },
 ];
 
 type OrderItem = {
@@ -86,15 +93,15 @@ function StatusTimeline({ status }: { status: string }) {
   if (isCancelled || isHold) {
     return (
       <div
-        className={`rounded-lg px-4 py-3 text-sm ${
+        className={`rounded-xl px-4 py-3 text-sm font-semibold ${
           isHold
-            ? "bg-orange-50 text-orange-800"
-            : "bg-red-50 text-red-800"
+            ? "bg-[#FFF1D6] text-[#8A4B00]"
+            : "bg-[#FEECEC] text-[#B42318]"
         }`}
       >
         {isHold
-          ? "This order is on hold. Status updates are locked until the issue is resolved."
-          : "This order has been cancelled."}
+          ? "অর্ডারটি হোল্ডে আছে। সমস্যার সমাধান না হওয়া পর্যন্ত স্ট্যাটাস বদলানো যাবে না।"
+          : "অর্ডারটি বাতিল করা হয়েছে।"}
       </div>
     );
   }
@@ -116,18 +123,18 @@ function StatusTimeline({ status }: { status: string }) {
                   isPast
                     ? isCurrent
                       ? "bg-primary text-primary-ink ring-4 ring-primary/20"
-                      : "bg-primary/20 text-primary-strong"
+                      : "bg-primary-soft text-primary-strong"
                     : "bg-surface text-muted"
                 }`}
               >
                 {idx + 1}
               </div>
               <span
-                className={`mt-1.5 text-center text-[10px] font-medium capitalize leading-tight ${
+                className={`mt-1.5 text-center text-xs font-semibold leading-tight ${
                   isPast ? "text-foreground" : "text-muted"
                 }`}
               >
-                {step}
+                {STEP_LABEL[step]}
               </span>
             </div>
             {idx < STATUS_FLOW.length - 1 && (
@@ -146,11 +153,11 @@ function StatusTimeline({ status }: { status: string }) {
 
 function DetailSkeleton() {
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-4">
       {Array.from({ length: 3 }).map((_, i) => (
         <div
           key={i}
-          className="rounded-xl border border-border bg-white p-5 shadow-sm"
+          className="rounded-2xl border border-border bg-white p-5"
         >
           <div className="h-4 w-32 animate-pulse rounded bg-surface" />
           <div className="mt-4 space-y-3">
@@ -217,8 +224,8 @@ export function SalesDetail({ orderId }: { orderId: string }) {
       showMessage(
         "success",
         isCancelRequest
-          ? "Cancellation request sent to the buyer."
-          : `Status updated to ${pendingStatus}.`
+          ? "ক্রেতার কাছে বাতিলের অনুরোধ পাঠানো হয়েছে।"
+          : `স্ট্যাটাস আপডেট হয়েছে: ${STEP_LABEL[pendingStatus] ?? pendingStatus}।`
       );
     } catch (err) {
       if (!isCancelRequest) {
@@ -226,7 +233,7 @@ export function SalesDetail({ orderId }: { orderId: string }) {
       }
       showMessage(
         "error",
-        err instanceof Error ? err.message : "Failed to update status. Please try again."
+        err instanceof Error ? err.message : "স্ট্যাটাস আপডেট করা যায়নি। আবার চেষ্টা করুন।"
       );
     }
 
@@ -237,10 +244,10 @@ export function SalesDetail({ orderId }: { orderId: string }) {
   if (loading) return <DetailSkeleton />;
   if (!order) {
     return (
-      <div className="rounded-xl border border-border bg-white p-8 text-center">
-        <p className="font-semibold">Order not found</p>
+      <div className="rounded-2xl border border-border bg-white p-8 text-center">
+        <p className="font-bold">অর্ডারটি পাওয়া যায়নি</p>
         <Button href="/sales" variant="outline" size="sm" className="mt-4">
-          Back to Sales
+          বিক্রির তালিকায় ফিরুন
         </Button>
       </div>
     );
@@ -257,10 +264,11 @@ export function SalesDetail({ orderId }: { orderId: string }) {
     <div>
       {message && (
         <div
-          className={`mb-4 rounded-lg px-4 py-3 text-sm font-medium ${
+          role="status"
+          className={`mb-4 rounded-xl px-4 py-3 text-sm font-semibold ${
             message.type === "success"
-              ? "bg-green-50 text-green-800 border border-green-200"
-              : "bg-red-50 text-red-800 border border-red-200"
+              ? "bg-teal-soft text-teal"
+              : "bg-[#FEECEC] text-[#B42318]"
           }`}
         >
           {message.text}
@@ -268,26 +276,26 @@ export function SalesDetail({ orderId }: { orderId: string }) {
       )}
 
       <PageHeader
-        title="Order Details"
-        description={`Order #${shortId}`}
+        title="অর্ডারের বিবরণ"
+        description={`অর্ডার #${shortId}`}
         action={
           <Button href="/sales" variant="outline" size="sm">
             <span className="flex items-center gap-1.5">
               <BackIcon />
-              Back
+              ফিরে যান
             </span>
           </Button>
         }
       />
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <div className="space-y-4 lg:col-span-2">
+        <div className="flex flex-col gap-4 lg:col-span-2">
           {/* Summary */}
           <Card>
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <p className="text-sm text-muted">Customer</p>
-                <p className="text-xl font-bold text-foreground">
+                <p className="text-sm text-muted">ক্রেতা</p>
+                <p className="text-xl font-extrabold text-foreground">
                   {order.full_name}
                 </p>
                 <p className="mt-1 text-sm text-muted">
@@ -296,17 +304,17 @@ export function SalesDetail({ orderId }: { orderId: string }) {
               </div>
               <div className="text-right">
                 <StatusBadge status={order.status} />
-                <p className="mt-2 text-2xl font-bold text-foreground">
-                  ৳{total.toFixed(2)}
+                <p className="mt-2 text-2xl font-extrabold text-foreground">
+                  {formatBdt(total)}
                 </p>
-                <p className="text-sm text-muted">{itemCount} items</p>
+                <p className="text-sm text-muted">{itemCount.toLocaleString("bn-BD")} পিস</p>
               </div>
             </div>
           </Card>
 
           {/* Items */}
           <Card>
-            <h3 className="font-semibold text-foreground">Order Items</h3>
+            <h3 className="font-extrabold text-foreground">অর্ডারের পণ্য</h3>
             <div className="mt-4 divide-y divide-border">
               {order.order_items?.map((item, i) => (
                 <div
@@ -325,32 +333,31 @@ export function SalesDetail({ orderId }: { orderId: string }) {
                       )}
                       {item.product_sizes?.size && (
                         <span className="rounded-md bg-surface px-2 py-0.5 text-xs font-medium text-foreground">
-                          Size {item.product_sizes.size}
+                          সাইজ {item.product_sizes.size}
                         </span>
                       )}
                     </div>
                     <p className="mt-1 text-sm text-muted">
-                      ৳{Number(item.price_snapshot).toFixed(2)} × {item.quantity}
+                      {formatBdt(Number(item.price_snapshot))} × {item.quantity.toLocaleString("bn-BD")}
                     </p>
                   </div>
                   <p className="shrink-0 font-semibold text-foreground">
-                    ৳
-                    {(item.price_snapshot * item.quantity).toFixed(2)}
+                    {formatBdt(item.price_snapshot * item.quantity)}
                   </p>
                 </div>
               ))}
             </div>
             <div className="mt-4 flex justify-between border-t border-border pt-4">
-              <span className="font-semibold text-foreground">Total</span>
-              <span className="text-lg font-bold text-foreground">
-                ৳{total.toFixed(2)}
+              <span className="font-bold text-foreground">মোট</span>
+              <span className="text-lg font-extrabold text-foreground">
+                {formatBdt(total)}
               </span>
             </div>
           </Card>
 
           {/* Status */}
           <Card>
-            <h3 className="font-semibold text-foreground">Order Status</h3>
+            <h3 className="font-extrabold text-foreground">অর্ডারের অবস্থা</h3>
             <div className="mt-4">
               <StatusTimeline status={order.status} />
             </div>
@@ -358,7 +365,7 @@ export function SalesDetail({ orderId }: { orderId: string }) {
             {!isHold && order.status?.toLowerCase() !== "cancelled" && (
               <div className="mt-6">
                 <p className="mb-3 text-sm text-muted">
-                  Update status to keep your customer informed
+                  ক্রেতাকে জানাতে স্ট্যাটাস আপডেট করুন
                 </p>
                 <div className="grid gap-2 sm:grid-cols-2">
                   {STATUS_OPTIONS.map((opt) => {
@@ -370,17 +377,17 @@ export function SalesDetail({ orderId }: { orderId: string }) {
                         type="button"
                         disabled={updating || isActive}
                         onClick={() => askUpdateStatus(opt.key)}
-                        className={`rounded-xl border p-3 text-left transition-all ${
+                        className={`rounded-2xl border-2 p-3.5 text-left transition-colors ${
                           isActive
-                            ? "border-primary bg-primary/5 ring-2 ring-primary/20"
+                            ? "border-primary bg-primary-soft"
                             : opt.danger
-                              ? "border-border hover:border-red-300 hover:bg-red-50"
-                              : "border-border hover:border-primary/40 hover:bg-surface"
+                              ? "border-border hover:border-[#B42318] hover:bg-[#FEECEC]"
+                              : "border-border hover:border-primary hover:bg-surface"
                         } disabled:cursor-not-allowed disabled:opacity-60`}
                       >
                         <p
-                          className={`text-sm font-semibold ${
-                            opt.danger ? "text-red-700" : "text-foreground"
+                          className={`text-sm font-bold ${
+                            opt.danger ? "text-[#B42318]" : "text-foreground"
                           }`}
                         >
                           {opt.label}
@@ -396,12 +403,12 @@ export function SalesDetail({ orderId }: { orderId: string }) {
         </div>
 
         {/* Sidebar */}
-        <div className="space-y-4">
+        <div className="flex flex-col gap-4">
           <Card>
-            <h3 className="font-semibold text-foreground">Customer</h3>
-            <div className="mt-4 space-y-3">
+            <h3 className="font-extrabold text-foreground">ক্রেতা</h3>
+            <div className="mt-4 flex flex-col gap-3">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary-strong">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-soft text-sm font-bold text-primary-strong">
                   {(order.full_name || "C")
                     .split(" ")
                     .map((n) => n[0])
@@ -433,7 +440,7 @@ export function SalesDetail({ orderId }: { orderId: string }) {
           </Card>
 
           <Card>
-            <h3 className="font-semibold text-foreground">Delivery Address</h3>
+            <h3 className="font-extrabold text-foreground">ডেলিভারি ঠিকানা</h3>
             <div className="mt-4 flex gap-2">
               <MapIcon />
               <div className="text-sm">
@@ -443,11 +450,11 @@ export function SalesDetail({ orderId }: { orderId: string }) {
             </div>
           </Card>
 
-          <Card className="bg-surface/50">
-            <p className="text-xs text-muted">
-              Need help with this order?{" "}
-              <Link href="/support" className="font-medium text-primary-strong hover:underline">
-                Contact support
+          <Card className="bg-surface">
+            <p className="text-sm text-muted">
+              এই অর্ডার নিয়ে সাহায্য লাগবে?{" "}
+              <Link href="/support" className="font-bold text-primary-strong hover:underline">
+                সাপোর্টে জানান
               </Link>
             </p>
           </Card>
@@ -458,16 +465,16 @@ export function SalesDetail({ orderId }: { orderId: string }) {
         open={pendingStatus !== null}
         title={
           pendingStatus === "cancelled"
-            ? "Request cancellation"
-            : `Update to ${pendingStatus}`
+            ? "বাতিলের অনুরোধ পাঠান"
+            : `স্ট্যাটাস বদলে "${STEP_LABEL[pendingStatus ?? ""] ?? pendingStatus}" করবেন?`
         }
         description={
           pendingStatus === "cancelled"
-            ? "This will send a cancellation request to the buyer. They must accept before the order is cancelled."
+            ? "ক্রেতার কাছে বাতিলের অনুরোধ যাবে। তিনি রাজি হলেই অর্ডার বাতিল হবে।"
             : pendingOption?.desc
         }
         confirmLabel={
-          pendingStatus === "cancelled" ? "Send request" : "Update status"
+          pendingStatus === "cancelled" ? "অনুরোধ পাঠান" : "স্ট্যাটাস আপডেট করুন"
         }
         variant={pendingStatus === "cancelled" ? "danger" : "default"}
         loading={updating}

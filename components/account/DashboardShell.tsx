@@ -1,55 +1,14 @@
 import Link from "next/link";
 import { ReactNode } from "react";
-import { DashboardMobileNav } from "@/components/account/DashboardMobileNav";
-import { UserProfile } from "@/lib/auth";
-
-type NavItem = {
-  href: string;
-  label: string;
-  icon: string;
-  roles?: ("wholesale" | "retail")[];
-  sellerOnly?: boolean;
-};
-
-const navItems: NavItem[] = [
-  { href: "/profile", label: "Profile", icon: "👤" },
-  { href: "/account", label: "My Account", icon: "🏪" },
-  { href: "/messages", label: "Messages", icon: "💬" },
-  { href: "/notifications", label: "Notifications", icon: "🔔" },
-  { href: "/hub", label: "Hub", icon: "📋" },
-  { href: "/orders", label: "My Orders", icon: "📦" },
-  { href: "/sales", label: "Sales Orders", icon: "💰", roles: ["wholesale"] },
-  {
-    href: "/product-upload",
-    label: "Upload Product",
-    icon: "➕",
-    roles: ["wholesale", "retail"],
-    sellerOnly: true,
-  },
-  {
-    href: "/advertise-product",
-    label: "Advertise Product",
-    icon: "📣",
-    roles: ["wholesale"],
-  },
-  {
-    href: "/featured-request",
-    label: "Store Promotion",
-    icon: "⭐",
-    roles: ["wholesale"],
-  },
-  {
-    href: "/content-creator-referral",
-    label: "Creator Referral",
-    icon: "🔗",
-  },
-  { href: "/support", label: "Support", icon: "🆘" },
-];
+import { DashboardChips, DashboardNav } from "@/components/account/DashboardNav";
+import { Avatar } from "@/components/layout/AccountMenu";
+import { STORE_TYPE_LABEL } from "@/lib/labels";
+import type { UserProfile } from "@/lib/profile";
 
 const footerLinks = [
-  { href: "/about", label: "About" },
-  { href: "/privacy-policy", label: "Privacy Policy" },
-  { href: "/terms", label: "Terms & Conditions" },
+  { href: "/about", label: "আমাদের সম্পর্কে" },
+  { href: "/privacy-policy", label: "প্রাইভেসি পলিসি" },
+  { href: "/terms", label: "শর্তাবলী" },
 ];
 
 type DashboardShellProps = {
@@ -58,78 +17,56 @@ type DashboardShellProps = {
 };
 
 export function DashboardShell({ children, profile }: DashboardShellProps) {
-  const isSeller = profile.store_type === "wholesale";
-  const isActive = profile.status === "active";
-
-  const visibleNav = navItems.filter((item) => {
-    if (item.roles && profile.store_type && !item.roles.includes(profile.store_type)) {
-      return false;
-    }
-    if (item.sellerOnly && !isActive) return false;
-    return true;
-  });
+  const name = profile.store_name || profile.full_name || "অ্যাকাউন্ট";
 
   return (
-    <div className="bg-surface min-h-screen">
-      <div className="mx-auto flex max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:px-8">
-        <aside className="hidden w-64 shrink-0 lg:block">
-          <div className="sticky top-24 rounded-xl border border-border bg-white p-4 shadow-sm">
-            <div className="mb-4 border-b border-border pb-4">
-              <p className="truncate font-semibold text-foreground">
-                {profile.store_name || profile.full_name}
-              </p>
+    <div className="mx-auto flex max-w-[1320px] gap-6 px-4 py-5 sm:px-6 sm:py-6">
+      <aside className="hidden w-[260px] shrink-0 lg:block">
+        <div className="sticky top-[150px] flex flex-col gap-4 rounded-[18px] border border-border bg-white p-4">
+          <div className="flex items-center gap-3 border-b border-border pb-4">
+            <Avatar profile={profile} name={name} size={44} />
+            <div className="min-w-0">
+              <p className="truncate font-extrabold">{name}</p>
               <p className="truncate text-xs text-muted">{profile.email}</p>
               {profile.store_type && (
-                <span className="mt-2 inline-block rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase text-primary-strong">
-                  {profile.store_type}
+                <span
+                  className={`mt-1.5 inline-block rounded-full px-2.5 py-0.5 text-xs font-bold ${
+                    profile.store_type === "retail" ? "bg-teal-soft text-teal" : "bg-navy-soft text-navy"
+                  }`}
+                >
+                  {STORE_TYPE_LABEL[profile.store_type]}
                 </span>
               )}
             </div>
-
-            <nav className="space-y-1">
-              {visibleNav.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-surface"
-                >
-                  <span>{item.icon}</span>
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
-
-            <div className="mt-4 border-t border-border pt-4 space-y-1">
-              {footerLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="block px-3 py-1.5 text-xs text-muted hover:text-primary-strong"
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </div>
           </div>
-        </aside>
 
-        <div className="min-w-0 flex-1">
-          <DashboardMobileNav profile={profile} />
-          {profile.status && profile.status !== "active" && (
-            <div
-              className={`mb-6 rounded-lg px-4 py-3 text-sm font-medium ${
-                profile.status === "freeze"
-                  ? "bg-red-50 text-red-700"
-                  : "bg-amber-50 text-amber-700"
-              }`}
-            >
-              {profile.status === "freeze"
-                ? "Your account is frozen. Orders, selling, and messaging are disabled. Contact support."
-                : "Your account is restricted. Selling is disabled until verification; browsing and orders still work."}
-            </div>
-          )}
-          {children}
+          <DashboardNav profile={profile} />
+
+          <div className="flex flex-col gap-1 border-t border-border pt-3">
+            {footerLinks.map((link) => (
+              <Link key={link.href} href={link.href} className="px-3 py-1.5 text-xs text-muted hover:text-primary-strong">
+                {link.label}
+              </Link>
+            ))}
+          </div>
         </div>
+      </aside>
+
+      <div className="min-w-0 flex-1">
+        <DashboardChips profile={profile} />
+        {profile.status && profile.status !== "active" && (
+          <div
+            role="status"
+            className={`mb-5 rounded-2xl px-4 py-3 text-sm font-semibold ${
+              profile.status === "freeze" ? "bg-[#FEECEC] text-[#B42318]" : "bg-[#FFF1D6] text-[#8A4B00]"
+            }`}
+          >
+            {profile.status === "freeze"
+              ? "আপনার অ্যাকাউন্ট ফ্রিজ করা আছে। অর্ডার, বিক্রি ও মেসেজ বন্ধ। সাপোর্টে যোগাযোগ করুন।"
+              : "আপনার অ্যাকাউন্ট যাচাইয়ের অপেক্ষায় (restricted)। যাচাই না হওয়া পর্যন্ত বিক্রি বন্ধ; ব্রাউজ ও অর্ডার চলবে।"}
+          </div>
+        )}
+        {children}
       </div>
     </div>
   );

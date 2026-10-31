@@ -4,7 +4,7 @@ import { ReactNode } from "react";
 type ButtonProps = {
   children: ReactNode;
   href?: string;
-  variant?: "primary" | "secondary" | "outline" | "ghost";
+  variant?: "primary" | "secondary" | "outline" | "ghost" | "danger";
   size?: "sm" | "md" | "lg";
   className?: string;
   type?: "button" | "submit";
@@ -13,19 +13,18 @@ type ButtonProps = {
 };
 
 const variants = {
-  primary:
-    "bg-primary text-primary-ink hover:bg-primary-dark shadow-sm",
-  secondary:
-    "bg-black text-white hover:bg-gray-800",
-  outline:
-    "border-2 border-primary text-primary-strong hover:bg-primary/5",
+  /** Orange fill carries dark ink (white on this orange is only 2.6:1). */
+  primary: "bg-primary text-primary-ink hover:bg-primary-dark",
+  secondary: "bg-navy text-white hover:bg-navy-dark",
+  outline: "border-[1.5px] border-[#D1D5DB] bg-white text-foreground hover:border-primary",
   ghost: "text-foreground hover:bg-surface",
+  danger: "bg-[#B42318] text-white hover:bg-[#912018]",
 };
 
 const sizes = {
-  sm: "px-4 py-2 text-sm",
-  md: "px-6 py-2.5 text-sm font-semibold",
-  lg: "px-8 py-3.5 text-base font-semibold",
+  sm: "h-10 px-4 text-sm font-bold",
+  md: "h-11 px-6 text-[15px] font-bold",
+  lg: "h-[52px] px-8 text-base font-bold",
 };
 
 export function Button({
@@ -38,7 +37,7 @@ export function Button({
   onClick,
   disabled,
 }: ButtonProps) {
-  const classes = `inline-flex items-center justify-center rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${variants[variant]} ${sizes[size]} ${className}`;
+  const classes = `inline-flex items-center justify-center rounded-xl transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed ${variants[variant]} ${sizes[size]} ${className}`;
 
   if (href) {
     return (
@@ -49,12 +48,7 @@ export function Button({
   }
 
   return (
-    <button
-      type={type}
-      className={classes}
-      onClick={onClick}
-      disabled={disabled}
-    >
+    <button type={type} className={classes} onClick={onClick} disabled={disabled}>
       {children}
     </button>
   );

@@ -47,7 +47,7 @@ export function buildShellProfile(user: User): UserProfile {
     full_name: fullName,
     email: user.email ?? null,
     phone: null,
-    store_name: fullName ?? user.email?.split("@")[0] ?? "My Store",
+    store_name: fullName ?? user.email?.split("@")[0] ?? "আমার দোকান",
     avatar_url: null,
     store_type: "retail",
     address: null,
@@ -78,9 +78,9 @@ export function getOrderBlockReason(
   options?: { guestVerified?: boolean }
 ): string | null {
   if (options?.guestVerified) return null;
-  if (!profile) return "Sign in to place orders.";
+  if (!profile) return "অর্ডার করতে সাইন ইন করুন।";
   if (profile.status === "freeze") {
-    return "Your account is frozen. You cannot place orders right now.";
+    return "আপনার অ্যাকাউন্ট ফ্রিজ করা আছে, এখন অর্ডার করা যাবে না।";
   }
   return null;
 }

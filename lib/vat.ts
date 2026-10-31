@@ -39,7 +39,7 @@ export function buyerPriceVatHint(
   const rate = vatRateForSellerStoreType(storeType);
   const { inclusive } = priceWithVat(base, rate);
   const pct = Math.round(rate * 100);
-  return `Buyers will see BDT ${inclusive} (base + ${pct}% VAT)`;
+  return `ক্রেতারা দেখবেন ৳${inclusive.toLocaleString("bn-BD")} (আপনার দাম + ${pct.toLocaleString("bn-BD")}% ভ্যাট)`;
 }
 
 export function enrichProductPriceFields<

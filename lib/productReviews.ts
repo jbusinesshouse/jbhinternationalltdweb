@@ -24,7 +24,7 @@ async function uploadReviewImage(file: File, orderId: string): Promise<string> {
     form
   );
   const first = res.images?.[0];
-  if (!first?.publicUrl) throw new Error("Image upload failed");
+  if (!first?.publicUrl) throw new Error("ছবি আপলোড করা যায়নি");
   return first.publicUrl;
 }
 
@@ -35,10 +35,10 @@ export async function submitProductReview(input: {
   images: File[];
 }): Promise<void> {
   if (input.rating < 1 || input.rating > 5) {
-    throw new Error("Rating must be between 1 and 5");
+    throw new Error("রেটিং ১ থেকে ৫-এর মধ্যে হতে হবে");
   }
   if (input.images.length > MAX_REVIEW_IMAGES) {
-    throw new Error(`You can upload up to ${MAX_REVIEW_IMAGES} images`);
+    throw new Error(`সর্বোচ্চ ${MAX_REVIEW_IMAGES}টি ছবি দেওয়া যাবে`);
   }
   const imageUrls: string[] = [];
   for (const file of input.images) {

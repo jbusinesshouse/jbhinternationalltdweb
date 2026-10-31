@@ -54,20 +54,26 @@ export function ChatThread({ roomId }: { roomId: string }) {
     load();
   };
 
-  if (loading) return <p className="text-muted">Loading...</p>;
-  if (!room) return <p>Chat not found</p>;
+  if (loading) return <p className="text-muted">লোড হচ্ছে...</p>;
+  if (!room)
+    return (
+      <div className="rounded-2xl border border-dashed border-[#D1D5DB] bg-white px-6 py-14 text-center">
+        <p className="text-lg font-bold">চ্যাটটি পাওয়া যায়নি</p>
+        <div className="mt-4"><Button href="/messages" variant="outline">মেসেজে ফিরুন</Button></div>
+      </div>
+    );
 
   const otherId =
     room.buyer_id === userId ? room.seller_id : room.buyer_id;
 
   return (
-    <div className="flex h-[calc(100vh-12rem)] flex-col">
+    <div className="flex h-[calc(100dvh-15rem)] min-h-[440px] flex-col">
       <PageHeader
-        title={room.product?.name ?? "Chat"}
-        description={`Room with seller/buyer`}
+        title={room.product?.name ?? "চ্যাট"}
+        description="সেলার ও ক্রেতার মধ্যে সরাসরি চ্যাট"
         action={
           <Button href="/messages" variant="outline" size="sm">
-            Back
+            ফিরে যান
           </Button>
         }
       />
@@ -77,11 +83,11 @@ export function ChatThread({ roomId }: { roomId: string }) {
             href={`/products/${room.product.id}`}
             className="text-sm font-semibold text-primary-strong hover:underline"
           >
-            View product: {room.product.name}
+            পণ্য দেখুন: {room.product.name}
           </Link>
         </Card>
       )}
-      <div className="flex-1 space-y-3 overflow-y-auto rounded-xl border border-border bg-white p-4">
+      <div className="flex flex-1 flex-col gap-3 overflow-y-auto rounded-2xl border border-border bg-white p-4">
         {messages.map((msg) => {
           const isMine = msg.sender_id === userId;
           const parsed = parseChatMessageContent(msg.message_text);
@@ -91,10 +97,10 @@ export function ChatThread({ roomId }: { roomId: string }) {
               className={`flex ${isMine ? "justify-end" : "justify-start"}`}
             >
               <div
-                className={`max-w-[80%] rounded-xl px-4 py-2 text-sm ${
+                className={`max-w-[80%] whitespace-pre-wrap break-words rounded-2xl px-4 py-2.5 text-[15px] leading-relaxed ${
                   isMine
-                    ? "bg-primary text-primary-ink"
-                    : "bg-surface text-foreground"
+                    ? "rounded-br-md bg-primary text-primary-ink"
+                    : "rounded-bl-md bg-surface text-foreground"
                 }`}
               >
                 {parsed.kind === "product" ? (
@@ -103,10 +109,10 @@ export function ChatThread({ roomId }: { roomId: string }) {
                     <Link
                       href={`/products/${parsed.product.productId}`}
                       className={`mt-2 block text-xs underline ${
-                        isMine ? "text-white/90" : "text-primary-strong"
+                        isMine ? "text-primary-ink" : "text-primary-strong"
                       }`}
                     >
-                      {parsed.product.name} · BDT {parsed.product.price}
+                      {parsed.product.name} · ৳{Number(parsed.product.price).toLocaleString("bn-BD")}
                     </Link>
                   </div>
                 ) : (
@@ -122,10 +128,11 @@ export function ChatThread({ roomId }: { roomId: string }) {
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="Type a message..."
-          className="flex-1 rounded-lg border border-border px-4 py-2"
+          placeholder="মেসেজ লিখুন..."
+          aria-label="মেসেজ"
+          className="flex-1 rounded-xl border-[1.5px] border-[#D1D5DB] bg-white px-4 py-2.5 text-[15px] focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/20"
         />
-        <Button type="submit">Send</Button>
+        <Button type="submit" size="lg">পাঠান</Button>
       </form>
     </div>
   );

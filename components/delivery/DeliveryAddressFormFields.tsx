@@ -18,7 +18,7 @@ export const emptyAddressForm = (): AddressFormValues => ({
 });
 
 const fieldClass =
-  "w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm text-foreground placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:bg-surface disabled:opacity-60";
+  "w-full rounded-xl border-[1.5px] border-[#D1D5DB] bg-white px-4 py-2.5 text-[15px] text-foreground placeholder:text-muted/80 transition-colors focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/20 disabled:bg-surface disabled:text-muted";
 
 type Props = {
   values: AddressFormValues;
@@ -45,11 +45,11 @@ export function DeliveryAddressFormFields({
   };
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col gap-3">
       {showLabel && (
         <input
           type="text"
-          placeholder="Label (optional) e.g. Home, Warehouse"
+          placeholder="নাম (ঐচ্ছিক) যেমন: বাসা, গুদাম"
           value={values.label}
           onChange={(e) => set("label", e.target.value)}
           className={fieldClass}
@@ -62,7 +62,7 @@ export function DeliveryAddressFormFields({
         className={fieldClass}
         required
       >
-        <option value="">Select district *</option>
+        <option value="">জেলা বাছাই করুন *</option>
         {DISTRICTS.map((d) => (
           <option key={d} value={d}>{d}</option>
         ))}
@@ -74,14 +74,14 @@ export function DeliveryAddressFormFields({
         disabled={!values.district}
         className={fieldClass}
       >
-        <option value="">Select upazila / thana</option>
+        <option value="">উপজেলা / থানা বাছাই করুন</option>
         {upazilas.map((u) => (
           <option key={u} value={u}>{u}</option>
         ))}
       </select>
 
       <textarea
-        placeholder="Street / detailed address *"
+        placeholder="রাস্তা / বিস্তারিত ঠিকানা *"
         value={values.address}
         onChange={(e) => set("address", e.target.value)}
         rows={3}
@@ -90,7 +90,7 @@ export function DeliveryAddressFormFields({
       />
 
       {!values.district && (
-        <p className="text-xs text-muted">District is required.</p>
+        <p className="text-xs text-muted">জেলা বাছাই করা বাধ্যতামূলক।</p>
       )}
     </div>
   );

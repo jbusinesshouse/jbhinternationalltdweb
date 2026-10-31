@@ -4,15 +4,13 @@ import Link from "next/link";
 import Image from "next/image";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { authErrorMessage, errorBoxClass, inputClass, labelClass } from "@/components/ui/form";
 import { DISTRICTS, getUpazilasForDistrict } from "@/lib/bdLocations";
 import { LINKS } from "@/lib/constants";
 import { apiRequest } from "@/lib/api";
 import { uploadAvatarFile } from "@/lib/productMedia";
 import { createClient } from "@/lib/supabase/client";
 import type { UserProfile } from "@/lib/profile";
-
-const inputClass =
-  "mt-1 w-full rounded-lg border border-border px-4 py-3 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20";
 
 export function SignUpForm() {
   const [loading, setLoading] = useState(false);
@@ -63,7 +61,7 @@ export function SignUpForm() {
     e.preventDefault();
 
     if (!acceptedTerms) {
-      setError("Please accept the Terms & Conditions and Privacy Policy.");
+      setError("চালিয়ে যেতে শর্তাবলী ও প্রাইভেসি পলিসিতে টিক দিন।");
       return;
     }
 
@@ -83,12 +81,12 @@ export function SignUpForm() {
       !district ||
       !upazila
     ) {
-      setError("Please fill in all required fields.");
+      setError("* চিহ্নিত সব ঘর পূরণ করুন।");
       return;
     }
 
     if (password !== confirmPassword) {
-      setError("Password and confirm password must match.");
+      setError("দুটি পাসওয়ার্ড মিলছে না।");
       return;
     }
 
@@ -106,7 +104,7 @@ export function SignUpForm() {
           { auth: false }
         );
         if (!referral.valid || !referral.creatorId) {
-          setError("Invalid referral code.");
+          setError("রেফারেল কোডটি সঠিক নয়।");
           setLoading(false);
           return;
         }
@@ -123,13 +121,13 @@ export function SignUpForm() {
       });
 
       if (signUpError) throw signUpError;
-      if (!authData.user) throw new Error("Account could not be created.");
+      if (!authData.user) throw new Error("অ্যাকাউন্ট তৈরি করা যায়নি।");
 
       const accessToken = authData.session?.access_token ?? null;
       if (!accessToken) {
         // Email confirmation is on in Supabase: the profile is created on first sign-in.
         throw new Error(
-          "Account created. Please confirm your email, then sign in to finish setting up."
+          "অ্যাকাউন্ট তৈরি হয়েছে। ইমেইল কনফার্ম করে সাইন ইন করুন।"
         );
       }
       let avatarUrl: string | null = null;
@@ -163,16 +161,16 @@ export function SignUpForm() {
       window.location.href = "/products";
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : "Something went wrong. Please try again.";
+        err instanceof Error ? authErrorMessage(err.message) : "কিছু একটা সমস্যা হয়েছে। আবার চেষ্টা করুন।";
       setError(message);
       setLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       {error && (
-        <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
+        <div role="alert" className={errorBoxClass}>
           {error}
         </div>
       )}
@@ -181,18 +179,12 @@ export function SignUpForm() {
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
-          className="relative flex h-28 w-28 items-center justify-center overflow-hidden rounded-full bg-surface text-sm text-muted"
+          className="relative grid h-24 w-24 place-items-center overflow-hidden rounded-full border-2 border-dashed border-[#D1D5DB] bg-surface px-2 text-center text-xs font-semibold text-muted hover:border-primary"
         >
           {avatarPreview ? (
-            <Image
-              src={avatarPreview}
-              alt="Profile preview"
-              fill
-              className="object-cover"
-              unoptimized
-            />
+            <Image src={avatarPreview} alt="প্রোফাইল ছবির প্রিভিউ" fill className="object-cover" unoptimized />
           ) : (
-            "Pick Profile Image"
+            "ছবি দিন"
           )}
         </button>
         <input
@@ -202,197 +194,120 @@ export function SignUpForm() {
           className="hidden"
           onChange={(e) => handleAvatarChange(e.target.files?.[0] ?? null)}
         />
-        <p className="mt-2 text-xs text-muted">Optional</p>
+        <p className="mt-2 text-xs text-muted">ঐচ্ছিক</p>
       </div>
 
       <div>
-        <label className="block text-sm font-medium">Full Name *</label>
-        <input
-          type="text"
-          value={fullName}
-          onChange={(e) => setFullName(e.target.value)}
-          className={inputClass}
-          required
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium">Email *</label>
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className={inputClass}
-          autoCapitalize="none"
-          required
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium">Phone *</label>
-        <input
-          type="tel"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          className={inputClass}
-          required
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium">Store/Warehouse Name *</label>
-        <input
-          type="text"
-          value={storeName}
-          onChange={(e) => setStoreName(e.target.value)}
-          className={inputClass}
-          required
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium">Address *</label>
-        <input
-          type="text"
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
-          className={inputClass}
-          required
-        />
+        <label htmlFor="su-name" className={labelClass}>পুরো নাম *</label>
+        <input id="su-name" type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} className={inputClass} autoComplete="name" required />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label className="block text-sm font-medium">District *</label>
-          <select
-            value={district}
-            onChange={(e) => handleDistrictChange(e.target.value)}
-            className={inputClass}
-            required
-          >
-            <option value="">Select District</option>
+          <label htmlFor="su-email" className={labelClass}>ইমেইল *</label>
+          <input id="su-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} autoCapitalize="none" autoComplete="email" required />
+        </div>
+        <div>
+          <label htmlFor="su-phone" className={labelClass}>মোবাইল নম্বর *</label>
+          <input id="su-phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClass} placeholder="01XXXXXXXXX" autoComplete="tel" required />
+        </div>
+      </div>
+
+      <div>
+        <label className={labelClass}>অ্যাকাউন্টের ধরন *</label>
+        <div className="grid grid-cols-2 gap-3">
+          {(
+            [
+              { value: "retail", title: "খুচরা · Retail", body: "কিনতে ও বিক্রি করতে" },
+              { value: "wholesale", title: "পাইকারি · Wholesale", body: "অ্যাডমিন অনুমোদনের পর বিক্রি চালু" },
+            ] as const
+          ).map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              aria-pressed={storeType === opt.value}
+              onClick={() => setStoreType(opt.value)}
+              className={`flex flex-col gap-0.5 rounded-xl border-2 px-4 py-3 text-left transition-colors ${
+                storeType === opt.value ? "border-primary bg-primary-soft" : "border-border bg-white hover:border-primary/60"
+              }`}
+            >
+              <span className="text-[15px] font-bold">{opt.title}</span>
+              <span className="text-xs text-muted">{opt.body}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <label htmlFor="su-store" className={labelClass}>দোকান / গুদামের নাম *</label>
+        <input id="su-store" type="text" value={storeName} onChange={(e) => setStoreName(e.target.value)} className={inputClass} required />
+      </div>
+
+      <div>
+        <label htmlFor="su-address" className={labelClass}>ঠিকানা *</label>
+        <input id="su-address" type="text" value={address} onChange={(e) => setAddress(e.target.value)} className={inputClass} autoComplete="street-address" required />
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label htmlFor="su-district" className={labelClass}>জেলা *</label>
+          <select id="su-district" value={district} onChange={(e) => handleDistrictChange(e.target.value)} className={inputClass} required>
+            <option value="">জেলা বাছাই করুন</option>
             {DISTRICTS.map((d) => (
-              <option key={d} value={d}>
-                {d}
-              </option>
+              <option key={d} value={d}>{d}</option>
             ))}
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium">Upazila *</label>
-          <select
-            value={upazila}
-            onChange={(e) => setUpazila(e.target.value)}
-            className={inputClass}
-            disabled={!district}
-            required
-          >
-            <option value="">Select Upazila</option>
+          <label htmlFor="su-upazila" className={labelClass}>উপজেলা *</label>
+          <select id="su-upazila" value={upazila} onChange={(e) => setUpazila(e.target.value)} className={inputClass} disabled={!district} required>
+            <option value="">উপজেলা বাছাই করুন</option>
             {availableUpazilas.map((u) => (
-              <option key={u} value={u}>
-                {u}
-              </option>
+              <option key={u} value={u}>{u}</option>
             ))}
           </select>
-        </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium">Account Type *</label>
-        <div className="mt-2 grid grid-cols-2 gap-0 overflow-hidden rounded-lg border border-border">
-          <button
-            type="button"
-            onClick={() => setStoreType("retail")}
-            className={`px-4 py-3 text-sm font-semibold transition-colors ${
-              storeType === "retail"
-                ? "bg-foreground text-white"
-                : "bg-white text-foreground hover:bg-surface"
-            }`}
-          >
-            Retail
-          </button>
-          <button
-            type="button"
-            onClick={() => setStoreType("wholesale")}
-            className={`border-l border-border px-4 py-3 text-sm font-semibold transition-colors ${
-              storeType === "wholesale"
-                ? "bg-foreground text-white"
-                : "bg-white text-foreground hover:bg-surface"
-            }`}
-          >
-            Wholesale
-          </button>
         </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label className="block text-sm font-medium">Password *</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className={inputClass}
-            required
-            minLength={6}
-          />
+          <label htmlFor="su-pass" className={labelClass}>পাসওয়ার্ড *</label>
+          <input id="su-pass" type="password" value={password} onChange={(e) => setPassword(e.target.value)} className={inputClass} autoComplete="new-password" required minLength={6} />
         </div>
         <div>
-          <label className="block text-sm font-medium">Confirm Password *</label>
-          <input
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            className={inputClass}
-            required
-            minLength={6}
-          />
+          <label htmlFor="su-pass2" className={labelClass}>পাসওয়ার্ড আবার *</label>
+          <input id="su-pass2" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className={inputClass} autoComplete="new-password" required minLength={6} />
         </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium">Referral Code (optional)</label>
-        <input
-          type="text"
-          value={referralCode}
-          onChange={(e) => setReferralCode(e.target.value)}
-          className={inputClass}
-          autoCapitalize="none"
-        />
+        <label htmlFor="su-ref" className={labelClass}>রেফারেল কোড (ঐচ্ছিক)</label>
+        <input id="su-ref" type="text" value={referralCode} onChange={(e) => setReferralCode(e.target.value)} className={inputClass} autoCapitalize="none" />
       </div>
 
-      <label className="flex items-start gap-2 text-sm text-muted">
+      <label className="flex items-start gap-3 text-sm leading-relaxed text-muted">
         <input
           type="checkbox"
           checked={acceptedTerms}
           onChange={(e) => setAcceptedTerms(e.target.checked)}
-          className="mt-1"
+          className="mt-1 h-4 w-4 accent-[#F5832B]"
         />
         <span>
-          By checking the box, you agree to our{" "}
-          <Link href={LINKS.privacyPolicy} className="text-primary-strong hover:underline">
-            Privacy Policy
-          </Link>{" "}
-          and{" "}
-          <Link
-            href={LINKS.termsAndConditions}
-            className="text-primary-strong hover:underline"
-          >
-            Terms & Conditions
-          </Link>
-          .
+          আমি{" "}
+          <Link href={LINKS.termsAndConditions} className="font-semibold text-primary-strong hover:underline">শর্তাবলী</Link>{" "}
+          ও{" "}
+          <Link href={LINKS.privacyPolicy} className="font-semibold text-primary-strong hover:underline">প্রাইভেসি পলিসি</Link>{" "}
+          মেনে নিচ্ছি।
         </span>
       </label>
 
-      <Button type="submit" className="w-full" disabled={loading}>
-        {loading ? "Creating account..." : "Sign Up"}
+      <Button type="submit" size="lg" className="w-full" disabled={loading}>
+        {loading ? "অ্যাকাউন্ট তৈরি হচ্ছে..." : "অ্যাকাউন্ট খুলুন"}
       </Button>
 
       <p className="text-center text-sm text-muted">
-        Already have an account?{" "}
-        <Link href="/sign-in" className="font-semibold text-primary-strong hover:underline">
-          Sign in
-        </Link>
+        আগেই অ্যাকাউন্ট আছে?{" "}
+        <Link href="/sign-in" className="font-bold text-primary-strong hover:underline">সাইন ইন</Link>
       </p>
     </form>
   );

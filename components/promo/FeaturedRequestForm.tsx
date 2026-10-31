@@ -25,7 +25,7 @@ export function FeaturedRequestForm({ sellerId }: { sellerId: string }) {
     setSubmitting(true);
     try {
       await submitFeaturedStoreRequest(sellerId, message || null);
-      alert("Featured store request submitted!");
+      alert("ফিচার্ড স্টোরের আবেদন পাঠানো হয়েছে!");
       setLatest(await fetchMyLatestFeaturedRequest(sellerId));
     } catch (err: any) {
       alert(err.message);
@@ -36,9 +36,7 @@ export function FeaturedRequestForm({ sellerId }: { sellerId: string }) {
   if (featured) {
     return (
       <Card>
-        <p className="font-semibold text-green-600">
-          Your store is currently featured!
-        </p>
+        <p className="font-extrabold text-teal">আপনার স্টোর এখন ফিচার্ড আছে!</p>
       </Card>
     );
   }
@@ -47,7 +45,7 @@ export function FeaturedRequestForm({ sellerId }: { sellerId: string }) {
     return (
       <Card>
         <StatusBadge status="pending" />
-        <p className="mt-3">Your request is pending review.</p>
+        <p className="mt-3">আপনার আবেদনটি যাচাইয়ের অপেক্ষায় আছে।</p>
       </Card>
     );
   }
@@ -55,24 +53,24 @@ export function FeaturedRequestForm({ sellerId }: { sellerId: string }) {
   return (
     <div>
       <PageHeader
-        title="Store Promotion"
-        description="Get featured on the homepage — 10 days / 1000 BDT"
+        title="ফিচার্ড স্টোর"
+        description="হোম পেজে আপনার স্টোর দেখান — ১০ দিন / ১,০০০ টাকা"
       />
       <Card>
         <p className="text-sm text-muted">
-          Featured stores appear on the homepage carousel. Admin approval
-          required after payment.
+          ফিচার্ড স্টোর হোম পেজের তালিকায় দেখানো হয়। পেমেন্টের পর অ্যাডমিনের অনুমোদন লাগে।
         </p>
-        <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+        <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-4">
           <textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            placeholder="Optional message to admin..."
+            placeholder="অ্যাডমিনের জন্য বার্তা (ঐচ্ছিক)..."
+            aria-label="অ্যাডমিনের জন্য বার্তা"
             rows={4}
-            className="w-full rounded-lg border border-border px-3 py-2"
+            className="w-full rounded-xl border-[1.5px] border-[#D1D5DB] bg-white px-4 py-2.5 text-[15px] text-foreground placeholder:text-muted/80 transition-colors focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/20 disabled:bg-surface disabled:text-muted"
           />
-          <Button type="submit" disabled={submitting}>
-            {submitting ? "Submitting..." : "Submit Request"}
+          <Button type="submit" size="lg" disabled={submitting}>
+            {submitting ? "পাঠানো হচ্ছে..." : "আবেদন পাঠান"}
           </Button>
         </form>
       </Card>

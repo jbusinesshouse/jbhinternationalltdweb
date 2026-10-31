@@ -20,8 +20,8 @@ export function ConfirmDialog({
   open,
   title,
   description,
-  confirmLabel = "Confirm",
-  cancelLabel = "Cancel",
+  confirmLabel = "নিশ্চিত করুন",
+  cancelLabel = "বাতিল",
   variant = "default",
   loading = false,
   onConfirm,
@@ -32,44 +32,29 @@ export function ConfirmDialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-[80] flex items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="confirm-dialog-title"
     >
-      <div
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-        onClick={() => !loading && onCancel()}
-      />
-      <div className="relative w-full max-w-md rounded-2xl border border-border bg-white p-6 shadow-xl">
-        <h2
-          id="confirm-dialog-title"
-          className="text-lg font-semibold text-foreground"
-        >
+      <div className="absolute inset-0 bg-navy-dark/50 backdrop-blur-sm" onClick={() => !loading && onCancel()} />
+      <div className="relative w-full max-w-md rounded-[22px] border border-border bg-white p-6 shadow-[0_24px_60px_rgba(13,24,46,0.25)]">
+        <h2 id="confirm-dialog-title" className="text-lg font-extrabold text-foreground">
           {title}
         </h2>
-        {description && (
-          <p className="mt-2 text-sm text-muted">{description}</p>
-        )}
+        {description && <p className="mt-2 text-sm leading-relaxed text-muted">{description}</p>}
         {children}
         <div className="mt-6 flex gap-3">
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-1"
-            onClick={onCancel}
-            disabled={loading}
-          >
+          <Button variant="outline" className="flex-1" onClick={onCancel} disabled={loading}>
             {cancelLabel}
           </Button>
           <Button
-            variant={variant === "danger" ? "secondary" : "primary"}
-            size="sm"
-            className={`flex-1 ${variant === "danger" ? "bg-red-600 hover:bg-red-700" : ""}`}
+            variant={variant === "danger" ? "danger" : "primary"}
+            className="flex-1"
             onClick={onConfirm}
             disabled={loading}
           >
-            {loading ? "Updating…" : confirmLabel}
+            {loading ? "অপেক্ষা করুন…" : confirmLabel}
           </Button>
         </div>
       </div>

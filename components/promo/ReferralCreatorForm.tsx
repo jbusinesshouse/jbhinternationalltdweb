@@ -55,7 +55,7 @@ export function ReferralCreatorForm({
         followerCount: form.followerCount || null,
         message: form.message || null,
       });
-      alert("Application submitted!");
+      alert("আবেদন পাঠানো হয়েছে!");
       setApplication(await fetchMyLatestReferralCreatorApplication(userId));
     } catch (err: any) {
       alert(err.message);
@@ -66,19 +66,19 @@ export function ReferralCreatorForm({
   if (dashboard) {
     return (
       <div>
-        <PageHeader title="Creator Referral Dashboard" />
+        <PageHeader title="ক্রিয়েটর রেফারেল ড্যাশবোর্ড" />
         <Card>
-          <p className="text-lg font-bold">Code: {dashboard.creator.code}</p>
+          <p className="text-lg font-extrabold">কোড: {dashboard.creator.code}</p>
           <p className="text-sm text-muted">
-            Total signups: {dashboard.totalSignups}
+            মোট সাইন আপ: {Number(dashboard.totalSignups).toLocaleString("bn-BD")}
           </p>
-          <div className="mt-4 space-y-2">
+          <div className="mt-4 flex flex-col gap-2">
             {dashboard.signups.map((s: any) => (
               <div
                 key={s.id}
-                className="rounded-lg border border-border px-3 py-2 text-sm"
+                className="rounded-xl border border-border bg-white px-4 py-3 text-[15px]"
               >
-                {s.display_name} · {s.store_type}
+                {s.display_name} · {s.store_type === "wholesale" ? "পাইকারি" : s.store_type === "retail" ? "খুচরা" : s.store_type}
               </div>
             ))}
           </div>
@@ -91,7 +91,7 @@ export function ReferralCreatorForm({
     return (
       <Card>
         <StatusBadge status="pending" />
-        <p className="mt-3">Your application is under review.</p>
+        <p className="mt-3">আপনার আবেদনটি যাচাইয়ের অপেক্ষায় আছে।</p>
       </Card>
     );
   }
@@ -99,33 +99,33 @@ export function ReferralCreatorForm({
   return (
     <div>
       <PageHeader
-        title="Content Creator Referral"
-        description="Apply to become a referral creator"
+        title="কনটেন্ট ক্রিয়েটর রেফারেল"
+        description="রেফারেল ক্রিয়েটর হতে আবেদন করুন"
       />
       <Card>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           {(
             [
-              ["fullName", "Full Name"],
-              ["phone", "Phone"],
-              ["profileUrl", "Profile URL"],
-              ["followerCount", "Follower Count"],
+              ["fullName", "পুরো নাম"],
+              ["phone", "মোবাইল নম্বর"],
+              ["profileUrl", "প্রোফাইল লিংক"],
+              ["followerCount", "ফলোয়ার সংখ্যা (ঐচ্ছিক)"],
             ] as const
           ).map(([key, label]) => (
             <div key={key}>
-              <label className="text-sm font-medium">{label}</label>
+              <label className="text-sm font-bold">{label}</label>
               <input
                 required={key !== "followerCount"}
                 value={form[key]}
                 onChange={(e) =>
                   setForm((prev) => ({ ...prev, [key]: e.target.value }))
                 }
-                className="mt-1 w-full rounded-lg border border-border px-3 py-2"
+                className="mt-1 w-full rounded-xl border-[1.5px] border-[#D1D5DB] bg-white px-4 py-2.5 text-[15px] text-foreground placeholder:text-muted/80 transition-colors focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/20 disabled:bg-surface disabled:text-muted"
               />
             </div>
           ))}
           <div>
-            <label className="text-sm font-medium">Platform</label>
+            <label className="text-sm font-bold">প্ল্যাটফর্ম</label>
             <select
               value={form.platform}
               onChange={(e) =>
@@ -134,7 +134,7 @@ export function ReferralCreatorForm({
                   platform: e.target.value as ReferralCreatorPlatform,
                 }))
               }
-              className="mt-1 w-full rounded-lg border border-border px-3 py-2"
+              className="mt-1 w-full rounded-xl border-[1.5px] border-[#D1D5DB] bg-white px-4 py-2.5 text-[15px] text-foreground placeholder:text-muted/80 transition-colors focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/20 disabled:bg-surface disabled:text-muted"
             >
               {PLATFORMS.map((p) => (
                 <option key={p} value={p}>
@@ -148,12 +148,13 @@ export function ReferralCreatorForm({
             onChange={(e) =>
               setForm((prev) => ({ ...prev, message: e.target.value }))
             }
-            placeholder="Optional message..."
+            placeholder="বার্তা (ঐচ্ছিক)..."
+            aria-label="বার্তা"
             rows={3}
-            className="w-full rounded-lg border border-border px-3 py-2"
+            className="w-full rounded-xl border-[1.5px] border-[#D1D5DB] bg-white px-4 py-2.5 text-[15px] text-foreground placeholder:text-muted/80 transition-colors focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/20 disabled:bg-surface disabled:text-muted"
           />
-          <Button type="submit" disabled={submitting}>
-            {submitting ? "Submitting..." : "Apply"}
+          <Button type="submit" size="lg" disabled={submitting}>
+            {submitting ? "পাঠানো হচ্ছে..." : "আবেদন করুন"}
           </Button>
         </form>
       </Card>

@@ -30,7 +30,7 @@ import {
 type AddressMode = "store" | "saved" | "custom";
 
 const inputClass =
-  "w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm text-foreground placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20";
+  "w-full rounded-xl border-[1.5px] border-[#D1D5DB] bg-white px-4 py-2.5 text-[15px] text-foreground placeholder:text-muted/80 transition-colors focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/20 disabled:bg-surface disabled:text-muted";
 
 export function CheckoutForm({
   profile,
@@ -178,9 +178,9 @@ export function CheckoutForm({
   if (!parsed) {
     return (
       <Card>
-        <p>Invalid checkout data. Please start from a product page.</p>
+        <p className="font-semibold">চেকআউটের তথ্য পাওয়া যায়নি। অনুগ্রহ করে পণ্যের পেজ থেকে শুরু করুন।</p>
         <Button href="/products" className="mt-4">
-          Browse Products
+          পণ্য দেখুন
         </Button>
       </Card>
     );
@@ -189,7 +189,7 @@ export function CheckoutForm({
   const handleSendOtp = async () => {
     setFormError(null);
     if (!form.phone.trim()) {
-      setFormError("Enter your mobile number to receive an OTP.");
+      setFormError("কোড পেতে আপনার মোবাইল নম্বর দিন।");
       return;
     }
     setOtpSending(true);
@@ -198,7 +198,7 @@ export function CheckoutForm({
       setOtpSent(true);
       setDebugOtp(res.debugOtp ?? null);
     } catch (err: unknown) {
-      setFormError(err instanceof Error ? err.message : "Could not send OTP.");
+      setFormError(err instanceof Error ? err.message : "কোড পাঠানো যায়নি।");
     } finally {
       setOtpSending(false);
     }
@@ -210,16 +210,16 @@ export function CheckoutForm({
 
     if (profile && !canPlaceOrders(profile)) {
       setFormError(
-        orderBlockReason ?? "You cannot place orders with this account."
+        orderBlockReason ?? "এই অ্যাকাউন্ট দিয়ে অর্ডার করা যাবে না।"
       );
       return;
     }
     if (!lineItems.length) {
-      setFormError("Select quantity first.");
+      setFormError("আগে পণ্যের পরিমাণ বাছাই করুন।");
       return;
     }
     if (!form.full_name.trim() || !form.phone.trim()) {
-      setFormError("Name and phone are required.");
+      setFormError("নাম ও মোবাইল নম্বর দিতে হবে।");
       return;
     }
 
@@ -227,14 +227,14 @@ export function CheckoutForm({
     if (!delivery) {
       setFormError(
         addressMode === "custom"
-          ? "District and address are required."
-          : "Please choose a valid delivery address."
+          ? "জেলা ও ঠিকানা দিতে হবে।"
+          : "একটি সঠিক ডেলিভারি ঠিকানা বাছাই করুন।"
       );
       return;
     }
 
     if (isGuest && !otp.trim()) {
-      setFormError("Enter the SMS verification code to confirm your order.");
+      setFormError("অর্ডার কনফার্ম করতে SMS-এ পাওয়া কোডটি দিন।");
       return;
     }
 
@@ -290,7 +290,7 @@ export function CheckoutForm({
       router.push(`/orders/${res.orderId}`);
     } catch (err: unknown) {
       setFormError(
-        err instanceof Error ? err.message : "Could not place order."
+        err instanceof Error ? err.message : "অর্ডার করা যায়নি। আবার চেষ্টা করুন।"
       );
     } finally {
       setSubmitting(false);
@@ -298,46 +298,46 @@ export function CheckoutForm({
   };
 
   const chipClass = (mode: AddressMode) =>
-    `flex-1 rounded-lg border px-3 py-2.5 text-sm font-semibold transition-colors ${
+    `flex-1 rounded-xl border-2 px-3 py-2.5 text-sm font-bold transition-colors ${
       addressMode === mode
-        ? "border-foreground bg-foreground text-white"
-        : "border-border bg-surface text-muted hover:bg-border"
+        ? "border-primary bg-primary-soft text-foreground"
+        : "border-border bg-white text-muted hover:border-primary/60"
     }`;
 
   return (
     <div>
       <PageHeader
-        title="Checkout"
+        title="চেকআউট"
         description={
           isGuest
-            ? "Order with your phone — no account required"
-            : "Confirm your order"
+            ? "মোবাইল নম্বর দিয়েই অর্ডার করুন — অ্যাকাউন্ট লাগবে না"
+            : "আপনার অর্ডার কনফার্ম করুন"
         }
       />
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             {isGuest && (
-              <p className="rounded-lg border border-border bg-surface/60 px-3 py-2 text-sm text-muted">
-                We’ll send a one-time SMS code to confirm your order.{" "}
-                <Link href="/sign-in" className="font-semibold text-primary-strong">
-                  Sign in
-                </Link>{" "}
-                if you already have an account.
+              <p className="rounded-xl bg-primary-soft px-4 py-3 text-sm leading-relaxed text-[#3A2410]">
+                অর্ডার কনফার্ম করতে আমরা একটি এককালীন SMS কোড পাঠাব। আগে থেকে অ্যাকাউন্ট থাকলে{" "}
+                <Link href="/sign-in" className="font-bold text-primary-strong underline">
+                  সাইন ইন করুন
+                </Link>
+                ।
               </p>
             )}
 
-            <h3 className="font-semibold text-foreground">Contact</h3>
+            <h3 className="text-lg font-extrabold">যোগাযোগ</h3>
             {(["full_name", "phone", "email"] as const).map((key) => (
               <input
                 key={key}
                 required={key !== "email"}
                 placeholder={
                   key === "full_name"
-                    ? "Full name *"
+                    ? "পুরো নাম *"
                     : key === "phone"
-                      ? "Mobile number * (01XXXXXXXXX)"
-                      : "Email (optional)"
+                      ? "মোবাইল নম্বর * (01XXXXXXXXX)"
+                      : "ইমেইল (ঐচ্ছিক)"
                 }
                 value={form[key]}
                 onChange={(e) =>
@@ -348,13 +348,9 @@ export function CheckoutForm({
             ))}
 
             {isGuest && (
-              <div className="space-y-3 rounded-xl border border-border p-4">
-                <h3 className="font-semibold text-foreground">
-                  SMS verification
-                </h3>
-                <p className="text-sm text-muted">
-                  Confirm your number before we place the order.
-                </p>
+              <div className="flex flex-col gap-3 rounded-2xl border border-border p-4">
+                <h3 className="font-extrabold">SMS ভেরিফিকেশন</h3>
+                <p className="text-sm text-muted">অর্ডার করার আগে আপনার নম্বরটি কনফার্ম করুন।</p>
                 <Button
                   type="button"
                   variant="outline"
@@ -362,38 +358,38 @@ export function CheckoutForm({
                   onClick={() => void handleSendOtp()}
                 >
                   {otpSending
-                    ? "Sending…"
+                    ? "পাঠানো হচ্ছে…"
                     : otpSent
-                      ? "Resend OTP"
-                      : "Send OTP"}
+                      ? "আবার কোড পাঠান"
+                      : "কোড পাঠান"}
                 </Button>
                 {otpSent && (
                   <input
                     required
                     inputMode="numeric"
-                    placeholder="Enter 6-digit OTP *"
+                    placeholder="৬ সংখ্যার কোড দিন *"
                     value={otp}
                     onChange={(e) => setOtp(e.target.value)}
                     className={inputClass}
                   />
                 )}
                 {debugOtp && (
-                  <p className="text-xs text-amber-700">
-                    Dev OTP (SMS gateway not configured):{" "}
+                  <p className="text-xs text-[#8A4B00]">
+                    টেস্ট কোড (SMS গেটওয়ে চালু নেই):{" "}
                     <span className="font-mono font-semibold">{debugOtp}</span>
                   </p>
                 )}
               </div>
             )}
 
-            <h3 className="font-semibold text-foreground">Delivery address</h3>
+            <h3 className="text-lg font-extrabold">ডেলিভারি ঠিকানা</h3>
             {!isGuest && (
               <div className="flex gap-2">
                 {(
                   [
-                    ["store", "Store"],
-                    ["saved", "Saved"],
-                    ["custom", "New"],
+                    ["store", "দোকানের ঠিকানা"],
+                    ["saved", "সেভ করা"],
+                    ["custom", "নতুন"],
                   ] as const
                 ).map(([mode, label]) => (
                   <button
@@ -409,12 +405,10 @@ export function CheckoutForm({
             )}
 
             {!isGuest && addressMode === "store" && (
-              <div className="rounded-xl border border-border bg-surface/50 p-4">
+              <div className="rounded-2xl border border-border bg-surface p-4">
                 {storeSnapshot ? (
                   <>
-                    <p className="font-semibold text-foreground">
-                      Deliver to store address
-                    </p>
+                    <p className="font-bold">দোকানের ঠিকানায় ডেলিভারি</p>
                     <p className="mt-1 text-sm text-muted">
                       {formatDeliveryAddressLine({
                         district: profile?.district,
@@ -425,28 +419,25 @@ export function CheckoutForm({
                   </>
                 ) : (
                   <p className="text-sm text-muted">
-                    Your store address is incomplete. Use a saved or new address
-                    instead.
+                    আপনার দোকানের ঠিকানা অসম্পূর্ণ। সেভ করা বা নতুন ঠিকানা ব্যবহার করুন।
                   </p>
                 )}
               </div>
             )}
 
             {!isGuest && addressMode === "saved" && (
-              <div className="space-y-3">
+              <div className="flex flex-col gap-3">
                 {addressesLoading ? (
                   <div className="h-20 animate-pulse rounded-xl bg-surface" />
                 ) : savedAddresses.length === 0 ? (
-                  <div className="rounded-xl border border-border p-4">
-                    <p className="text-sm text-muted">
-                      No saved delivery addresses yet.
-                    </p>
+                  <div className="rounded-2xl border border-border p-4">
+                    <p className="text-sm text-muted">এখনো কোনো ডেলিভারি ঠিকানা সেভ করা নেই।</p>
                     <button
                       type="button"
                       onClick={() => setAddressMode("custom")}
                       className="mt-2 text-sm font-semibold text-primary-strong hover:underline"
                     >
-                      Create a new address
+                      নতুন ঠিকানা দিন
                     </button>
                   </div>
                 ) : (
@@ -457,14 +448,14 @@ export function CheckoutForm({
                         key={addr.id}
                         type="button"
                         onClick={() => setSelectedSavedId(addr.id)}
-                        className={`w-full rounded-xl border p-4 text-left transition-colors ${
+                        className={`w-full rounded-2xl border-2 p-4 text-left transition-colors ${
                           selected
-                            ? "border-primary bg-primary/5"
-                            : "border-border bg-white hover:border-primary/40"
+                            ? "border-primary bg-primary-soft"
+                            : "border-border bg-white hover:border-primary/50"
                         }`}
                       >
                         <p className="font-semibold text-foreground">
-                          {addr.label?.trim() || "Saved address"}
+                          {addr.label?.trim() || "সেভ করা ঠিকানা"}
                         </p>
                         <p className="mt-1 text-sm text-muted">
                           {formatDeliveryAddressLine(addr)}
@@ -477,10 +468,8 @@ export function CheckoutForm({
             )}
 
             {(isGuest || addressMode === "custom") && (
-              <div className="rounded-xl border border-border p-4">
-                <p className="font-semibold text-foreground">
-                  Delivery address
-                </p>
+              <div className="rounded-2xl border border-border p-4">
+                <p className="font-bold">ডেলিভারি ঠিকানা</p>
                 <div className="mt-3">
                   <DeliveryAddressFormFields
                     values={customForm}
@@ -499,7 +488,7 @@ export function CheckoutForm({
                         className="h-4 w-4 rounded border-border text-primary-strong focus:ring-primary/20"
                       />
                       <span className="text-sm text-foreground">
-                        Save this address for next time
+                        পরের বার ব্যবহারের জন্য ঠিকানাটি সেভ করুন
                       </span>
                     </label>
                     {saveCustomAddress && (
@@ -513,7 +502,7 @@ export function CheckoutForm({
                           className="h-4 w-4 rounded border-border text-primary-strong focus:ring-primary/20"
                         />
                         <span className="text-sm text-foreground">
-                          Set as my default delivery address
+                          এটি আমার ডিফল্ট ঠিকানা করুন
                         </span>
                       </label>
                     )}
@@ -523,7 +512,7 @@ export function CheckoutForm({
             )}
 
             {formError && (
-              <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              <p role="alert" className="rounded-xl bg-[#FEECEC] px-4 py-3 text-sm font-semibold text-[#B42318]">
                 {formError}
               </p>
             )}
@@ -531,36 +520,38 @@ export function CheckoutForm({
             <Button
               type="submit"
               disabled={submitting || (isGuest && !otpSent)}
+              size="lg"
               className="w-full"
             >
               {submitting
-                ? "Placing order…"
+                ? "অর্ডার হচ্ছে…"
                 : isGuest
-                  ? "Verify & place order"
-                  : "Confirm Order"}
+                  ? "কোড যাচাই করে অর্ডার করুন"
+                  : "অর্ডার কনফার্ম করুন"}
             </Button>
           </form>
         </Card>
 
         <Card>
-          <h3 className="font-semibold text-foreground">Order Summary</h3>
-          <p className="mt-2 text-foreground">{parsed.product.name}</p>
-          <div className="mt-4 space-y-2 text-sm">
+          <h3 className="text-lg font-extrabold">অর্ডারের সারসংক্ষেপ</h3>
+          <p className="mt-2 font-semibold">{parsed.product.name}</p>
+          <div className="mt-4 flex flex-col gap-2 text-sm">
             {lineItems.map((item, i) => (
               <div key={i} className="flex justify-between">
                 <span>
                   {item.product_name_snapshot} × {item.quantity}
                 </span>
                 <span>
-                  BDT {(item.price_snapshot * item.quantity).toFixed(0)}
+                  ৳{(item.price_snapshot * item.quantity).toLocaleString("bn-BD")}
                 </span>
               </div>
             ))}
           </div>
-          <p className="mt-4 text-xl font-bold text-foreground">
-            Total: BDT {total.toFixed(0)}
-          </p>
-          <p className="mt-1 text-xs text-muted">Prices include VAT</p>
+          <div className="mt-4 flex items-baseline justify-between border-t border-border pt-4">
+            <span className="font-bold">মোট</span>
+            <span className="text-2xl font-extrabold">৳{total.toLocaleString("bn-BD")}</span>
+          </div>
+          <p className="mt-1 text-xs text-muted">দাম ভ্যাটসহ</p>
         </Card>
       </div>
     </div>

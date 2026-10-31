@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { UnsubscribeForm } from "@/components/email/UnsubscribeForm";
 
 export const metadata: Metadata = {
-  title: "Unsubscribe",
-  description: "Manage emails from JBH International Limited.",
+  title: "ইমেইল বন্ধ করুন",
+  description: "JBH International Limited-এর ইমেইল বন্ধ করুন।",
   robots: { index: false, follow: false },
 };
 

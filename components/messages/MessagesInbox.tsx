@@ -28,23 +28,23 @@ export function MessagesInbox() {
 
   return (
     <div>
-      <PageHeader title="Messages" description="Chat with buyers and sellers" />
+      <PageHeader title="মেসেজ" description="ক্রেতা ও সেলারদের সাথে চ্যাট" />
       {loading ? (
-        <p className="text-muted">Loading...</p>
+        <p className="text-muted">লোড হচ্ছে...</p>
       ) : rooms.length === 0 ? (
         <EmptyState
-          title="No messages yet"
-          description="Start a conversation from a product page."
+          title="এখনো কোনো মেসেজ নেই"
+          description="কোনো পণ্যের পেজ থেকে সেলারকে মেসেজ দিয়ে কথা শুরু করুন।"
         />
       ) : (
-        <div className="space-y-2">
+        <div className="flex flex-col gap-2.5">
           {rooms.map((room) => {
             const other =
               room.buyer_id === userId ? room.seller : room.buyer;
             return (
               <Link key={room.id} href={`/messages/${room.id}`}>
-                <Card className="flex items-center gap-3 hover:shadow-md">
-                  <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full bg-primary/10">
+                <Card className="flex items-center gap-3 transition-colors hover:border-primary">
+                  <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full bg-primary-soft">
                     {other?.avatar_url ? (
                       <Image
                         src={other.avatar_url}
@@ -61,7 +61,7 @@ export function MessagesInbox() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold">
-                      {other?.store_name ?? "Chat"}
+                      {other?.store_name ?? "চ্যাট"}
                     </p>
                     <p className="truncate text-xs text-muted">
                       {room.product?.name}

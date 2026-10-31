@@ -22,6 +22,7 @@ import {
 } from "@/lib/moqRules";
 import { apiRequest, newIdempotencyKey } from "@/lib/api";
 import type { UserProfile } from "@/lib/profile";
+import { categoryLabel } from "@/lib/labels";
 import { buyerPriceVatHint } from "@/lib/vat";
 
 const MAX_ADDITIONAL_IMAGES = 8;
@@ -60,7 +61,7 @@ type AdditionalImage = {
 };
 
 const fieldClass =
-  "w-full rounded-lg border border-border px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20";
+  "w-full rounded-xl border-[1.5px] border-[#D1D5DB] bg-white px-4 py-2.5 text-[15px] text-foreground placeholder:text-muted/80 transition-colors focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/20 disabled:bg-surface disabled:text-muted";
 
 export function ProductUploadForm({
   sellerId,
@@ -282,7 +283,7 @@ export function ProductUploadForm({
     if (!files?.length) return;
     const remaining = MAX_ADDITIONAL_IMAGES - additionalImages.length;
     if (remaining <= 0) {
-      alert(`You can add up to ${MAX_ADDITIONAL_IMAGES} additional images.`);
+      alert(`সর্বোচ্চ ${MAX_ADDITIONAL_IMAGES.toLocaleString("bn-BD")}টি অতিরিক্ত ছবি দেওয়া যাবে।`);
       return;
     }
 
@@ -311,47 +312,47 @@ export function ProductUploadForm({
 
   const validateCreateForm = (): string | null => {
     if (!isProductListingAccount(profile?.store_type)) {
-      return "Only retail or wholesale seller accounts can upload products.";
+      return "শুধু খুচরা বা পাইকারি সেলার অ্যাকাউন্ট পণ্য আপলোড করতে পারে।";
     }
     if (profile?.status === "freeze") {
-      return "Your account is frozen. You cannot upload products right now.";
+      return "আপনার অ্যাকাউন্ট ফ্রিজ করা আছে, এখন পণ্য আপলোড করা যাবে না।";
     }
     if (profile?.status === "restricted") {
-      return "Your account is restricted. You cannot upload products right now.";
+      return "আপনার অ্যাকাউন্ট যাচাইয়ের অপেক্ষায় আছে, এখন পণ্য আপলোড করা যাবে না।";
     }
-    if (!mainImage) return "Please upload a main image.";
-    if (!name.trim()) return "Please enter the product name.";
-    if (!parentCategoryId) return "Please select a parent category.";
-    if (!subCategoryId || !category.trim()) return "Please select a sub-category.";
-    if (parsePositiveNumber(price) == null) return "Please enter a valid price.";
+    if (!mainImage) return "প্রধান ছবি দিন।";
+    if (!name.trim()) return "পণ্যের নাম দিন।";
+    if (!parentCategoryId) return "ক্যাটাগরি বাছাই করুন।";
+    if (!subCategoryId || !category.trim()) return "সাব-ক্যাটাগরি বাছাই করুন।";
+    if (parsePositiveNumber(price) == null) return "সঠিক দাম দিন।";
     const moqError = moqValidationMessage(
       profile?.store_type,
       parsePositiveInt(moq)
     );
     if (moqError) return moqError;
     if (plainTextFromHtml(description).length === 0) {
-      return "Please enter a product description.";
+      return "পণ্যের বিবরণ লিখুন।";
     }
-    if (variants.length === 0) return "Add at least one color variant.";
+    if (variants.length === 0) return "কমপক্ষে একটি রং যোগ করুন।";
 
     const colorKeys = new Set<string>();
     for (let i = 0; i < variants.length; i++) {
       const variant = variants[i];
       if (!variant.color.trim()) {
-        return `Please enter a color name for variant ${i + 1}.`;
+        return `${(i + 1).toLocaleString("bn-BD")} নম্বর রঙের নাম দিন।`;
       }
       const colorKey = variant.color.trim().toLowerCase();
       if (colorKeys.has(colorKey)) {
-        return "Each color variant must be unique.";
+        return "প্রতিটি রং আলাদা হতে হবে।";
       }
       colorKeys.add(colorKey);
 
       if (variant.sizes.length === 0) {
-        return `Select at least one size for ${variant.color}.`;
+        return `"${variant.color}" রঙের জন্য কমপক্ষে একটি সাইজ বাছাই করুন।`;
       }
       for (const size of variant.sizes) {
         if (parsePositiveInt(size.stock) == null) {
-          return `Enter valid stock for ${variant.color} - ${size.label}.`;
+          return `"${variant.color}" - ${size.label} সাইজের সঠিক স্টক দিন।`;
         }
       }
     }
@@ -367,7 +368,7 @@ export function ProductUploadForm({
       const moqNum = parsePositiveInt(moq);
       const editMoqError = moqValidationMessage(profile?.store_type, moqNum);
       if (!name.trim() || !priceNum || !moqNum || !parentCategoryId || !subCategoryId) {
-        alert(editMoqError ?? "Fill all required fields");
+        alert(editMoqError ?? "সব প্রয়োজনীয় ঘর পূরণ করুন");
         return;
       }
       if (editMoqError) {
@@ -390,10 +391,10 @@ export function ProductUploadForm({
             selected_category: category.trim(),
           },
         });
-        alert("Product updated!");
+        alert("পণ্য আপডেট হয়েছে!");
         router.push("/account");
       } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : "Update failed";
+        const message = err instanceof Error ? err.message : "আপডেট করা যায়নি";
         alert(message);
       }
       setSubmitting(false);
@@ -448,11 +449,11 @@ export function ProductUploadForm({
         },
       });
 
-      alert("Product uploaded successfully!");
+      alert("পণ্য আপলোড হয়েছে!");
       router.push("/account");
     } catch (err: unknown) {
       if (uploadedPaths.length) await removeProductStoragePaths(uploadedPaths);
-      const message = err instanceof Error ? err.message : "Upload failed";
+      const message = err instanceof Error ? err.message : "আপলোড করা যায়নি";
       alert(message);
     }
 
@@ -468,46 +469,44 @@ export function ProductUploadForm({
 
   const submitLabel = productId
     ? submitting
-      ? "Saving..."
-      : "Update Product"
+      ? "সেভ হচ্ছে..."
+      : "পণ্য আপডেট করুন"
     : submitting
-      ? "Saving..."
+      ? "সেভ হচ্ছে..."
       : !isProductListingAccount(profile?.store_type)
-        ? "Sellers Only"
+        ? "শুধু সেলারদের জন্য"
         : profile?.status === "freeze"
-          ? "Account Frozen"
+          ? "অ্যাকাউন্ট ফ্রিজ করা"
           : profile?.status === "restricted"
-            ? "Upload Restricted"
-            : "Upload Product";
+            ? "আপলোড বন্ধ আছে"
+            : "পণ্য আপলোড করুন";
 
   return (
     <div>
       <PageHeader
-        title={productId ? "Edit Product" : "Upload Product"}
-        description="Add a new product to your store"
+        title={productId ? "পণ্য এডিট করুন" : "নতুন পণ্য আপলোড"}
+        description={productId ? "পণ্যের তথ্য আপডেট করুন" : "আপনার দোকানে নতুন পণ্য যোগ করুন"}
       />
       <Card>
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-8">
           {!productId && (
-            <section className="space-y-3">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-foreground">
-                Product Media
-              </h2>
+            <section className="flex flex-col gap-3">
+              <h2 className="text-lg font-extrabold">পণ্যের ছবি</h2>
               <button
                 type="button"
                 onClick={() => mainInputRef.current?.click()}
-                className="relative flex h-48 w-full items-center justify-center overflow-hidden rounded-lg border border-dashed border-border bg-surface text-sm text-muted"
+                className="relative flex h-52 w-full items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-[#D1D5DB] bg-surface text-sm font-semibold text-muted transition-colors hover:border-primary"
               >
                 {mainPreview ? (
                   <Image
                     src={mainPreview}
-                    alt="Main product"
+                    alt="প্রধান ছবির প্রিভিউ"
                     fill
                     className="object-contain"
                     unoptimized
                   />
                 ) : (
-                  "Upload Main Image"
+                  "প্রধান ছবি দিন (বাধ্যতামূলক)"
                 )}
               </button>
               <input
@@ -521,10 +520,10 @@ export function ProductUploadForm({
               <div className="flex gap-2 overflow-x-auto pb-1">
                 {additionalImages.map((img, i) => (
                   <div key={`${img.preview}-${i}`} className="relative shrink-0">
-                    <div className="relative h-20 w-20 overflow-hidden rounded-lg border border-border">
+                    <div className="relative h-20 w-20 overflow-hidden rounded-xl border border-border">
                       <Image
                         src={img.preview}
-                        alt={`Additional ${i + 1}`}
+                        alt={`অতিরিক্ত ছবি ${(i + 1).toLocaleString("bn-BD")}`}
                         fill
                         className="object-cover"
                         unoptimized
@@ -533,8 +532,8 @@ export function ProductUploadForm({
                     <button
                       type="button"
                       onClick={() => removeAdditionalImage(i)}
-                      className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white"
-                      aria-label="Remove image"
+                      className="absolute -right-1.5 -top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-[#B42318] text-sm text-white"
+                      aria-label="ছবি সরান"
                     >
                       ×
                     </button>
@@ -544,7 +543,8 @@ export function ProductUploadForm({
                   <button
                     type="button"
                     onClick={() => additionalInputRef.current?.click()}
-                    className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg border border-dashed border-border bg-surface text-2xl text-muted"
+                    className="flex h-20 w-20 shrink-0 items-center justify-center rounded-xl border-2 border-dashed border-[#D1D5DB] bg-surface text-2xl text-muted hover:border-primary"
+                    aria-label="আরও ছবি যোগ করুন"
                   >
                     +
                   </button>
@@ -564,14 +564,12 @@ export function ProductUploadForm({
             </section>
           )}
 
-          <section className="space-y-3">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-foreground">
-              Target Category
-            </h2>
+          <section className="flex flex-col gap-3">
+            <h2 className="text-lg font-extrabold">ক্যাটাগরি</h2>
             {loadingCategories ? (
-              <p className="text-sm text-muted">Loading categories...</p>
+              <p className="text-sm text-muted">ক্যাটাগরি লোড হচ্ছে...</p>
             ) : categories.length === 0 ? (
-              <p className="text-sm text-red-600">No categories available.</p>
+              <p className="text-sm text-[#B42318]">কোনো ক্যাটাগরি পাওয়া যায়নি।</p>
             ) : (
               <div className="flex flex-wrap gap-2">
                 {categories.map((item) => (
@@ -579,13 +577,13 @@ export function ProductUploadForm({
                     key={item.id}
                     type="button"
                     onClick={() => handleParentCategorySelect(item)}
-                    className={`rounded-lg border px-3 py-2 text-xs font-semibold uppercase transition-colors ${
+                    className={`rounded-full border-2 px-4 py-2 text-sm font-bold transition-colors ${
                       parentCategory === item.name
-                        ? "border-foreground bg-foreground text-white"
-                        : "border-border bg-white text-foreground hover:bg-surface"
+                        ? "border-primary bg-primary-soft text-foreground"
+                        : "border-border bg-white text-foreground hover:border-primary/60"
                     }`}
                   >
-                    {item.name}
+                    {categoryLabel(item.name, true)}
                   </button>
                 ))}
               </div>
@@ -593,16 +591,12 @@ export function ProductUploadForm({
           </section>
 
           {parentCategoryId && (
-            <section className="space-y-2">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-foreground">
-                Sub Category
-              </h2>
+            <section className="flex flex-col gap-2">
+              <h2 className="text-lg font-extrabold">সাব-ক্যাটাগরি</h2>
               {loadingSubcategories ? (
-                <p className="text-sm text-muted">Loading subcategories...</p>
+                <p className="text-sm text-muted">লোড হচ্ছে...</p>
               ) : filteredSubcategories.length === 0 ? (
-                <p className="text-sm text-muted">
-                  No subcategories available for this category.
-                </p>
+                <p className="text-sm text-muted">এই ক্যাটাগরির কোনো সাব-ক্যাটাগরি নেই।</p>
               ) : (
                 <select
                   value={subCategoryId ?? ""}
@@ -610,7 +604,7 @@ export function ProductUploadForm({
                   className={fieldClass}
                   required
                 >
-                  <option value="">Select sub-category</option>
+                  <option value="">সাব-ক্যাটাগরি বাছাই করুন</option>
                   {filteredSubcategories.map((subcat) => (
                     <option key={subcat.id} value={subcat.id}>
                       {subcat.name}
@@ -621,16 +615,19 @@ export function ProductUploadForm({
             </section>
           )}
 
-          <section className="space-y-3">
+          <section className="flex flex-col gap-3">
+            <h2 className="text-lg font-extrabold">পণ্যের তথ্য</h2>
             <input
-              placeholder="Product Name"
+              placeholder="পণ্যের নাম"
+              aria-label="পণ্যের নাম"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className={fieldClass}
               required
             />
             <input
-              placeholder="Price (BDT) Per Item"
+              placeholder="প্রতি পিসের দাম (টাকা, ভ্যাট ছাড়া)"
+              aria-label="প্রতি পিসের দাম"
               value={price}
               onChange={(e) => setPrice(e.target.value)}
               inputMode="decimal"
@@ -644,7 +641,8 @@ export function ProductUploadForm({
               ) : null;
             })()}
             <input
-              placeholder={minOrderQty != null ? `MOQ (min ${minOrderQty})` : "MOQ"}
+              placeholder={minOrderQty != null ? `MOQ — সর্বনিম্ন অর্ডার (কমপক্ষে ${minOrderQty.toLocaleString("bn-BD")})` : "MOQ — সর্বনিম্ন অর্ডার"}
+              aria-label="MOQ"
               value={moq}
               onChange={(e) => setMoq(e.target.value)}
               inputMode="numeric"
@@ -655,19 +653,18 @@ export function ProductUploadForm({
           </section>
 
           {!productId && (
-            <section className="space-y-4">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-foreground">
-                Inventory Variants
-              </h2>
+            <section className="flex flex-col gap-4">
+              <h2 className="text-lg font-extrabold">রং ও সাইজ (স্টক)</h2>
 
               {variants.map((variant, vIdx) => (
                 <div
                   key={vIdx}
-                  className="space-y-3 rounded-lg border border-border p-4"
+                  className="flex flex-col gap-3 rounded-2xl border border-border p-4"
                 >
                   <div className="flex items-center gap-2">
                     <input
-                      placeholder="Color (e.g. Red)"
+                      placeholder="রঙের নাম (যেমন: লাল)"
+                      aria-label="রঙের নাম"
                       value={variant.color}
                       onChange={(e) => {
                         const next = variants.map((v) => ({
@@ -682,16 +679,14 @@ export function ProductUploadForm({
                     <button
                       type="button"
                       onClick={() => setDeleteVariantIndex(vIdx)}
-                      className="rounded-lg px-2 py-2 text-sm text-red-600 hover:bg-red-50"
-                      aria-label="Delete variant"
+                      className="rounded-xl px-3 py-2 text-sm font-bold text-[#B42318] hover:bg-[#FEECEC]"
+                      aria-label="এই রং মুছুন"
                     >
-                      Delete
+                      মুছুন
                     </button>
                   </div>
 
-                  <p className="text-xs font-semibold uppercase text-muted">
-                    Select Sizes
-                  </p>
+                  <p className="text-sm font-bold text-muted">সাইজ বাছাই করুন</p>
                   <div className="flex flex-wrap gap-2">
                     {availableSizes.map((size) => {
                       const isSelected = variant.sizes.some(
@@ -702,10 +697,11 @@ export function ProductUploadForm({
                           key={size.id}
                           type="button"
                           onClick={() => toggleSizeSelection(vIdx, size)}
-                          className={`rounded-full border px-3 py-1 text-sm transition-colors ${
+                          aria-pressed={isSelected}
+                          className={`rounded-full border-2 px-3.5 py-1.5 text-sm font-bold transition-colors ${
                             isSelected
-                              ? "border-foreground bg-foreground text-white"
-                              : "border-border bg-white text-foreground hover:bg-surface"
+                              ? "border-primary bg-primary-soft text-foreground"
+                              : "border-border bg-white text-foreground hover:border-primary/60"
                           }`}
                         >
                           {size.label}
@@ -720,7 +716,8 @@ export function ProductUploadForm({
                         {sEntry.label}:
                       </span>
                       <input
-                        placeholder="Quantity"
+                        placeholder="স্টক (পিস)"
+                        aria-label={`${sEntry.label} স্টক`}
                         value={sEntry.stock}
                         inputMode="numeric"
                         onChange={(e) => updateStock(vIdx, sIdx, e.target.value)}
@@ -738,13 +735,13 @@ export function ProductUploadForm({
                   onClick={addColorVariant}
                   className="w-full"
                 >
-                  + Add Color Variant
+                  + নতুন রং যোগ করুন
                 </Button>
               )}
             </section>
           )}
 
-          <Button type="submit" disabled={submitDisabled} className="w-full">
+          <Button type="submit" size="lg" disabled={submitDisabled} className="w-full">
             {submitLabel}
           </Button>
         </form>
@@ -752,10 +749,10 @@ export function ProductUploadForm({
 
       <ConfirmDialog
         open={deleteVariantIndex !== null}
-        title="Delete variant?"
-        description="This color and its sizes will be removed."
-        confirmLabel="Delete"
-        cancelLabel="Cancel"
+        title="এই রংটি মুছবেন?"
+        description="রংটি ও তার সব সাইজ মুছে যাবে।"
+        confirmLabel="মুছুন"
+        cancelLabel="বাতিল"
         variant="danger"
         onCancel={() => setDeleteVariantIndex(null)}
         onConfirm={() => {

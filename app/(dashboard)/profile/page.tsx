@@ -8,7 +8,7 @@ export default async function ProfilePage() {
 
   return (
     <div>
-      <PageHeader title="Profile" description="Manage your account and settings" />
+      <PageHeader title="প্রোফাইল" description="আপনার অ্যাকাউন্ট ও সেটিংস ম্যানেজ করুন" />
       <ProfileHub userId={user.id} userEmail={user.email ?? ""} />
     </div>
   );

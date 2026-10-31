@@ -60,44 +60,44 @@ export function AccountDetails({ profile }: { profile: UserProfile }) {
   }, [products, filter, search]);
 
   const handleDeleteProduct = async (id: string) => {
-    if (!confirm("Delete this product?")) return;
+    if (!confirm("এই পণ্যটি মুছে ফেলবেন?")) return;
     try {
       await apiRequest(`/products/${id}`, { method: "DELETE", auth: true });
       setProducts((prev) => prev.filter((p) => p.id !== id));
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Could not delete this product.");
+      alert(err instanceof Error ? err.message : "পণ্যটি মোছা যায়নি।");
     }
   };
 
   if (loading) {
-    return <p className="text-muted">Loading account...</p>;
+    return <p className="text-muted">অ্যাকাউন্ট লোড হচ্ছে...</p>;
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-5">
       <Card>
-        <h2 className="text-lg font-semibold">Profile Information</h2>
+        <h2 className="text-lg font-extrabold">প্রোফাইল তথ্য</h2>
         <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
           {[
-            ["Store", profile.store_name],
-            ["Full Name", profile.full_name],
-            ["Phone", profile.phone],
-            ["Email", profile.email],
-            ["District", profile.district],
-            ["Upazila", profile.upazila],
-            ["Address", profile.address],
-            ["Type", profile.store_type],
+            ["দোকান", profile.store_name],
+            ["পুরো নাম", profile.full_name],
+            ["মোবাইল", profile.phone],
+            ["ইমেইল", profile.email],
+            ["জেলা", profile.district],
+            ["উপজেলা", profile.upazila],
+            ["ঠিকানা", profile.address],
+            ["ধরন", profile.store_type === "wholesale" ? "পাইকারি" : profile.store_type === "retail" ? "খুচরা" : null],
           ].map(([label, value]) => (
             <div key={label}>
               <dt className="text-muted">{label}</dt>
-              <dd className="font-medium capitalize">{value || "—"}</dd>
+              <dd className="font-semibold">{value || "—"}</dd>
             </div>
           ))}
         </dl>
       </Card>
 
       <Card>
-        <h2 className="text-lg font-semibold">Delivery Addresses</h2>
+        <h2 className="text-lg font-extrabold">ডেলিভারি ঠিকানা</h2>
         <DeliveryAddressSection
           profile={profile}
           onProfileDefaultChange={() => router.refresh()}
@@ -107,9 +107,9 @@ export function AccountDetails({ profile }: { profile: UserProfile }) {
       {isSeller && (
         <Card>
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-lg font-semibold">My Products</h2>
+            <h2 className="text-lg font-extrabold">আমার পণ্য</h2>
             <Button href="/product-upload" size="sm">
-              Upload Product
+              নতুন পণ্য
             </Button>
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
@@ -118,34 +118,35 @@ export function AccountDetails({ profile }: { profile: UserProfile }) {
                 key={f}
                 type="button"
                 onClick={() => setFilter(f)}
-                className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${
+                className={`rounded-full px-4 py-1.5 text-sm font-bold ${
                   filter === f
                     ? "bg-primary text-primary-ink"
                     : "bg-surface text-foreground"
                 }`}
               >
-                {f}
+                {f === "all" ? "সব" : f === "active" ? "সক্রিয়" : "অন্যান্য"}
               </button>
             ))}
           </div>
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search products..."
-            className="mt-3 w-full rounded-lg border border-border px-3 py-2 text-sm"
+            placeholder="পণ্য খুঁজুন..."
+            aria-label="পণ্য খুঁজুন"
+            className="mt-3 w-full rounded-xl border-[1.5px] border-[#D1D5DB] bg-white px-4 py-2.5 text-[15px] text-foreground placeholder:text-muted/80 transition-colors focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/20 disabled:bg-surface disabled:text-muted"
           />
-          <div className="mt-4 space-y-3">
+          <div className="mt-4 flex flex-col gap-3">
             {filteredProducts.length === 0 ? (
-              <p className="text-sm text-muted">No products found.</p>
+              <p className="text-sm text-muted">কোনো পণ্য পাওয়া যায়নি।</p>
             ) : (
               filteredProducts.map((product) => {
                 const img = product.product_images?.find((i) => i.is_main);
                 return (
                   <div
                     key={product.id}
-                    className="flex items-center gap-3 rounded-lg border border-border p-3"
+                    className="flex items-center gap-3 rounded-2xl border border-border p-3"
                   >
-                    <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-surface">
+                    <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-surface">
                       {img ? (
                         <Image
                           src={img.image_url}
@@ -159,23 +160,23 @@ export function AccountDetails({ profile }: { profile: UserProfile }) {
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-medium">{product.name}</p>
                       <p className="text-sm text-muted">
-                        BDT {product.price} · MOQ {product.moq} ·{" "}
-                        {product.status}
+                        ৳{Number(product.price).toLocaleString("bn-BD")} · MOQ {Number(product.moq ?? 0).toLocaleString("bn-BD")} ·{" "}
+                        {product.status === "active" ? "সক্রিয়" : product.status}
                       </p>
                     </div>
                     <div className="flex gap-2">
                       <Link
                         href={`/edit-product/${product.id}`}
-                        className="text-sm text-primary-strong hover:underline"
+                        className="text-sm font-bold text-primary-strong hover:underline"
                       >
-                        Edit
+                        এডিট
                       </Link>
                       <button
                         type="button"
                         onClick={() => handleDeleteProduct(product.id)}
-                        className="text-sm text-red-600 hover:underline"
+                        className="text-sm font-bold text-[#B42318] hover:underline"
                       >
-                        Delete
+                        মুছুন
                       </button>
                     </div>
                   </div>

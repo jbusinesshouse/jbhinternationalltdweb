@@ -22,16 +22,16 @@ export function moqValidationMessage(
   moq: number | null
 ): string | null {
   if (moq == null || !Number.isInteger(moq)) {
-    return "Please enter a whole-number minimum order quantity.";
+    return "MOQ একটি পূর্ণসংখ্যা দিন।";
   }
   const min = minimumOrderQuantityForStoreType(storeType);
   if (min == null) {
-    return "Only retail or wholesale seller accounts can upload products.";
+    return "শুধু খুচরা বা পাইকারি সেলার অ্যাকাউন্ট পণ্য আপলোড করতে পারে।";
   }
   if (moq < min) {
     return storeType === "wholesale"
-      ? `Wholesale minimum order quantity must be at least ${min}.`
-      : `Retail minimum order quantity must be at least ${min}.`;
+      ? `পাইকারি পণ্যের MOQ কমপক্ষে ${min.toLocaleString("bn-BD")} হতে হবে।`
+      : `খুচরা পণ্যের MOQ কমপক্ষে ${min.toLocaleString("bn-BD")} হতে হবে।`;
   }
   return null;
 }

@@ -300,7 +300,7 @@ export function ProductOrderActions({
       <div className="flex flex-wrap gap-3">
         {!userId && !guestCheckoutEnabled ? (
           <a
-            href="/sign-in"
+            href={`/sign-in?next=${encodeURIComponent(`/products/${product.id}`)}`}
             className="flex h-[54px] flex-[1_1_220px] items-center justify-center rounded-2xl bg-primary text-[17px] font-extrabold text-primary-ink hover:bg-primary-dark"
           >
             {checkoutLabel}

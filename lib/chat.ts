@@ -77,7 +77,7 @@ export function parseChatMessageContent(
 }
 
 export function getMessagePreviewText(text?: string): string {
-  if (!text) return "No messages yet";
+  if (!text) return "এখনো কোনো মেসেজ নেই";
 
   const parsed = parseChatMessageContent(text);
   if (parsed.kind === "product") {
@@ -98,7 +98,7 @@ export type ChatRoomProduct = {
 function toErrorMessage(err: unknown): string {
   if (err instanceof ApiError) return err.message;
   if (err instanceof Error) return err.message;
-  return "Something went wrong";
+  return "কিছু একটা সমস্যা হয়েছে";
 }
 
 export async function fetchChatRoom(roomId: string): Promise<{
@@ -178,7 +178,7 @@ export async function sendChatMessage(
 ): Promise<{ data: ChatMessage | null; error: string | null }> {
   const trimmed = messageText.trim();
   if (!trimmed) {
-    return { data: null, error: "Message cannot be empty" };
+    return { data: null, error: "মেসেজ খালি রাখা যাবে না" };
   }
 
   try {

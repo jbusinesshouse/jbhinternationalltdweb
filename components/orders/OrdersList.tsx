@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Card, EmptyState, PageHeader, StatusBadge } from "@/components/ui/PageElements";
 import { apiRequest } from "@/lib/api";
-import { calcOrderItemCount, calcOrderTotal, formatDate } from "@/lib/utils";
+import { calcOrderItemCount, calcOrderTotal, formatBdt, formatDate } from "@/lib/utils";
 
 type OrderRow = {
   id: string;
@@ -39,37 +39,37 @@ export function OrdersList() {
 
   return (
     <div>
-      <PageHeader title="My Orders" description="Track your purchase orders" />
+      <PageHeader title="আমার অর্ডার" description="আপনার কেনা অর্ডারগুলো এখানে ট্র্যাক করুন" />
       {loading ? (
-        <p className="text-muted">Loading...</p>
+        <p className="text-muted">লোড হচ্ছে...</p>
       ) : orders.length === 0 ? (
         <EmptyState
-          title="No orders yet"
-          description="When you place orders, they will appear here."
+          title="এখনো কোনো অর্ডার নেই"
+          description="অর্ডার করলে সেগুলো এখানে দেখা যাবে।"
         />
       ) : (
-        <div className="space-y-3">
+        <div className="flex flex-col gap-3">
           {orders.map((order) => (
             <Link key={order.id} href={`/orders/${order.id}`}>
-              <Card className="transition-shadow hover:shadow-md">
+              <Card className="transition-colors hover:border-primary">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <p className="font-semibold">
                       {order.order_items?.[0]?.product_name_snapshot ||
-                        "Order"}
+                        "অর্ডার"}
                       {order.order_items && order.order_items.length > 1
-                        ? ` +${order.order_items.length - 1} more`
+                        ? ` +আরও ${(order.order_items.length - 1).toLocaleString("bn-BD")}টি`
                         : ""}
                     </p>
                     <p className="text-sm text-muted">
                       {formatDate(order.created_at)} ·{" "}
-                      {calcOrderItemCount(order.order_items)} items
+                      {calcOrderItemCount(order.order_items).toLocaleString("bn-BD")} পিস
                     </p>
                   </div>
                   <div className="text-right">
                     <StatusBadge status={order.status} />
                     <p className="mt-2 font-bold">
-                      BDT {calcOrderTotal(order.order_items).toFixed(2)}
+                      {formatBdt(calcOrderTotal(order.order_items))}
                     </p>
                   </div>
                 </div>

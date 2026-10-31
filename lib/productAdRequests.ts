@@ -91,7 +91,7 @@ export async function submitProductAdRequest(params: {
   const { productIds, sellTargetBdt, budgetBdt } = params;
 
   if (!productIds.length) {
-    throw new Error("Select at least one product");
+    throw new Error("কমপক্ষে একটি পণ্য বাছাই করুন");
   }
 
   const packageOk = AD_PACKAGES.some(
@@ -99,7 +99,7 @@ export async function submitProductAdRequest(params: {
       pkg.sellTargetBdt === sellTargetBdt && pkg.budgetBdt === budgetBdt
   );
   if (!packageOk) {
-    throw new Error("Invalid advertising package");
+    throw new Error("প্যাকেজটি সঠিক নয়");
   }
 
   await apiRequest("/ads/requests", {
