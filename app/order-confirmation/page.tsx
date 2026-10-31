@@ -39,7 +39,7 @@ export default async function OrderConfirmationPage({ searchParams }: Props) {
         </div>
 
         <p className="mt-5 text-sm leading-relaxed text-muted">
-          পরে অর্ডার ট্র্যাক করতে একই ফোন নম্বর দিয়ে অ্যাকাউন্ট খুলে নিন — কোনো তাড়া নেই।
+          অর্ডার আইডিটি সংরক্ষণ করে রাখুন। সেলার আপনার দেওয়া নম্বরে যোগাযোগ করবেন। ভবিষ্যতে অর্ডার করতে চাইলে অ্যাকাউন্ট খুলে নিতে পারেন।
         </p>
         <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
           <Button href="/products" size="lg">কেনাকাটা চালিয়ে যান</Button>

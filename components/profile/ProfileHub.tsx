@@ -316,7 +316,7 @@ export function ProfileHub({ userId, userEmail }: ProfileHubProps) {
           rel="noopener noreferrer"
           className="block w-full rounded-xl bg-[#FEECEC] py-3 text-center text-sm font-bold text-[#B42318] hover:bg-[#FBD9D9]"
         >
-          অ্যাকাউন্ট ডিলিটের অনুরোধ
+          অ্যাকাউন্ট বন্ধ
         </a>
       </div>
     </div>
