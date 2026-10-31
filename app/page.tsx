@@ -5,6 +5,7 @@ import { TrustStrip } from "@/components/home/TrustStrip";
 import { ProductGrid } from "@/components/products/ProductGrid";
 import { FeaturedStores } from "@/components/stores/FeaturedStores";
 import { fetchGuestCheckoutEnabled } from "@/lib/api";
+import { jsonLdString } from "@/lib/jsonLd";
 import { getAuthSession } from "@/lib/auth";
 import { fetchCategories } from "@/lib/categories";
 import { BRAND } from "@/lib/constants";
@@ -39,7 +40,7 @@ export default async function HomePage() {
 
   return (
     <div className="mx-auto flex max-w-[1320px] flex-col gap-8 px-4 py-5 sm:px-6 sm:py-6">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(jsonLd) }} />
 
       <HomeHero categories={categories} showcase={products} user={user} profile={profile} />
       <TrustStrip guestCheckout={guestCheckout} />

@@ -6,6 +6,7 @@ import { ProductGrid } from "@/components/products/ProductGrid";
 import { ProductImageGallery } from "@/components/products/ProductImageGallery";
 import { ProductOrderActions } from "@/components/products/ProductOrderActions";
 import { fetchGuestCheckoutEnabled } from "@/lib/api";
+import { jsonLdString } from "@/lib/jsonLd";
 import { getAuthSession } from "@/lib/auth";
 import { BRAND } from "@/lib/constants";
 import { bnNumber, bnPrice, categoryLabel, STORE_TYPE_LABEL } from "@/lib/labels";
@@ -74,7 +75,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
 
   return (
     <div className="mx-auto flex max-w-[1320px] flex-col gap-6 px-4 py-5 sm:px-6">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(jsonLd) }} />
 
       <nav aria-label="Breadcrumb" className="flex flex-wrap gap-2 text-sm text-muted">
         <Link href="/" className="hover:text-foreground">হোম</Link>
