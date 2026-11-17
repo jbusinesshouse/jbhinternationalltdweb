@@ -171,8 +171,11 @@ export async function HubContent({ profile }: { profile: UserProfile }) {
         <Shortcut href="/orders" title="আমার অর্ডার" body="আপনার কেনা অর্ডার ট্র্যাক করুন।" tone="border border-border bg-white" Icon={BagIcon} />
         <Shortcut href="/messages" title="মেসেজ" body="ক্রেতা ও সেলারদের সাথে চ্যাট।" tone="border border-border bg-white" Icon={ChatIcon} />
         <Shortcut href="/support" title="সাহায্য" body="অ্যাকাউন্ট বা পণ্য নিয়ে সমস্যা হলে সাপোর্টে জানান।" tone="border border-border bg-white" Icon={HelpIcon} />
-        {isWholesale && (
+        {isSeller && (
           <Shortcut href="/sales" title="বিক্রি ও অর্ডার" body="সব বিক্রয়ের অর্ডার ম্যানেজ করুন।" tone="border border-border bg-white" Icon={BoxIcon} />
+        )}
+        {isSeller && sellingEnabled && (
+          <Shortcut href="/pickup-address" title="কুরিয়ার পিকআপ ঠিকানা" body="Pathao যেখান থেকে পার্সেল নেবে সেই ঠিকানা দিন।" tone="border border-border bg-white" Icon={BoxIcon} />
         )}
       </div>
 

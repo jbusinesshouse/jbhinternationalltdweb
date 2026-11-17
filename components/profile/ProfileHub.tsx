@@ -68,6 +68,7 @@ export function ProfileHub({ userId, userEmail }: ProfileHubProps) {
   }, [userId]);
 
   const isSeller = profile?.store_type === "wholesale";
+  const isListingAccount = isProductListingAccount(profile?.store_type);
   const canUploadProducts =
     isProductListingAccount(profile?.store_type) && canSell(profile?.status);
   const displayName = profile?.full_name || profile?.store_name || "ব্যবহারকারী";
@@ -83,6 +84,13 @@ export function ProfileHub({ userId, userEmail }: ProfileHubProps) {
         items: [
           ...(canUploadProducts
             ? [{ href: "/product-upload", label: "নতুন পণ্য আপলোড" }]
+            : []),
+          // Retail sellers also receive orders.
+          ...(isListingAccount && !isSeller
+            ? [{ href: "/sales", label: "বিক্রি ও অর্ডার" }]
+            : []),
+          ...(canUploadProducts
+            ? [{ href: "/pickup-address", label: "কুরিয়ার পিকআপ ঠিকানা" }]
             : []),
           ...(isSeller
             ? [
@@ -113,7 +121,7 @@ export function ProfileHub({ userId, userEmail }: ProfileHubProps) {
         ],
       },
     ],
-    [isSeller, canUploadProducts]
+    [isSeller, isListingAccount, canUploadProducts]
   );
 
   const handleSaveName = async () => {

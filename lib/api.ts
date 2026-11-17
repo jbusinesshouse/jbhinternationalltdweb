@@ -175,6 +175,14 @@ export async function placeGuestOrder(
     address: string;
     product_id: string;
     items: Array<{ variant_id: string; size_id: string; quantity: number }>;
+    /** Optional Pathao courier delivery. */
+    delivery?: {
+      method: "pathao";
+      city_id: number;
+      zone_id: number;
+      area_id: number | null;
+      expected_fee: number;
+    };
   },
   idempotencyKey?: string
 ) {

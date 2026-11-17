@@ -21,11 +21,20 @@ import {
 import { canPlaceOrders, getOrderBlockReason } from "@/lib/profile";
 import type { UserProfile } from "@/lib/auth";
 import {
+  ApiError,
   apiRequest,
   newIdempotencyKey,
   placeGuestOrder,
   requestGuestOrderOtp,
 } from "@/lib/api";
+import { CourierLocationFields } from "@/components/delivery/CourierLocationFields";
+import {
+  CourierLocation,
+  CourierQuote,
+  emptyCourierLocation,
+  fetchCourierAvailable,
+  fetchCourierQuote,
+} from "@/lib/courier";
 
 type AddressMode = "store" | "saved" | "custom";
 
@@ -152,6 +161,64 @@ export function CheckoutForm({
     0
   );
 
+  // --- Pathao courier (only when the API has it switched on) ---
+  const [courierEnabled, setCourierEnabled] = useState(false);
+  const [courierLocation, setCourierLocation] = useState<CourierLocation>(emptyCourierLocation());
+  const [quoteResult, setQuoteResult] = useState<{ key: string; quote: CourierQuote } | null>(null);
+  const [quoteNonce, setQuoteNonce] = useState(0);
+  const totalQuantity = lineItems.reduce((s, i) => s + i.quantity, 0);
+  const productId: string | undefined = parsed?.product?.id;
+  const { city_id: qCity, zone_id: qZone, area_id: qArea } = courierLocation;
+
+  useEffect(() => {
+    if (!productId) return;
+    void fetchCourierAvailable(productId).then(setCourierEnabled);
+  }, [productId]);
+
+  // A quote is tied to the exact inputs it was computed for; stale results are ignored.
+  const quoteKey =
+    courierEnabled && productId && totalQuantity && qCity && qZone
+      ? `${productId}|${totalQuantity}|${qCity}|${qZone}|${qArea ?? ""}|${quoteNonce}`
+      : null;
+
+  useEffect(() => {
+    if (!quoteKey || !productId || !qCity || !qZone) return;
+    let cancelled = false;
+    fetchCourierQuote({
+      product_id: productId,
+      quantity: totalQuantity,
+      city_id: qCity,
+      zone_id: qZone,
+      area_id: qArea,
+    })
+      .then((quote) => {
+        if (!cancelled) setQuoteResult({ key: quoteKey, quote });
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setQuoteResult({
+          key: quoteKey,
+          quote: {
+            available: false,
+            reason: "error",
+            message: err instanceof Error ? err.message : "ডেলিভারি চার্জ হিসাব করা যায়নি।",
+          },
+        });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [quoteKey, productId, totalQuantity, qCity, qZone, qArea]);
+
+  const courierQuote = quoteResult && quoteResult.key === quoteKey ? quoteResult.quote : null;
+  const quoting = quoteKey !== null && courierQuote === null;
+
+  const courierFee = courierQuote?.available ? courierQuote.delivery_fee : 0;
+  // Seller hasn't set up pickup etc. → order proceeds as before (seller arranges delivery).
+  const courierUnavailableForProduct =
+    courierQuote !== null && !courierQuote.available && courierQuote.reason !== "error";
+  const useCourier = courierEnabled && !courierUnavailableForProduct;
+
   const storeSnapshot = useMemo(() => {
     if (!profile?.district || !profile?.address) return null;
     return toOrderDeliverySnapshot({
@@ -238,6 +305,30 @@ export function CheckoutForm({
       return;
     }
 
+    let courierDelivery:
+      | { method: "pathao"; city_id: number; zone_id: number; area_id: number | null; expected_fee: number }
+      | undefined;
+    if (useCourier) {
+      if (!courierLocation.city_id || !courierLocation.zone_id) {
+        setFormError("হোম ডেলিভারির জন্য শহর ও জোন বাছাই করুন।");
+        return;
+      }
+      if (!courierQuote?.available) {
+        setFormError(
+          quoting ? "ডেলিভারি চার্জ হিসাব হচ্ছে, একটু অপেক্ষা করুন।" : "ডেলিভারি চার্জ পাওয়া যায়নি। আবার চেষ্টা করুন।"
+        );
+        if (!quoting) setQuoteNonce((n) => n + 1);
+        return;
+      }
+      courierDelivery = {
+        method: "pathao",
+        city_id: courierLocation.city_id,
+        zone_id: courierLocation.zone_id,
+        area_id: courierLocation.area_id,
+        expected_fee: courierQuote.delivery_fee,
+      };
+    }
+
     setSubmitting(true);
     try {
       const guestItems = lineItems.map((i) => ({
@@ -256,6 +347,7 @@ export function CheckoutForm({
           address: delivery.delivery_address,
           product_id: parsed.product.id,
           items: guestItems,
+          ...(courierDelivery ? { delivery: courierDelivery } : {}),
         });
         router.push(
           `/order-confirmation?orderId=${encodeURIComponent(result.orderId)}&phone=${encodeURIComponent(form.phone.trim())}`
@@ -285,10 +377,15 @@ export function CheckoutForm({
           address: delivery.delivery_address,
           product_id: parsed.product.id,
           items: guestItems,
+          ...(courierDelivery ? { delivery: courierDelivery } : {}),
         },
       });
       router.push(`/orders/${res.orderId}`);
     } catch (err: unknown) {
+      // Fee changed between quote and order: refresh the quote so the buyer sees the new total.
+      if (err instanceof ApiError && err.code === "DELIVERY_FEE_CHANGED") {
+        setQuoteNonce((n) => n + 1);
+      }
       setFormError(
         err instanceof Error ? err.message : "অর্ডার করা যায়নি। আবার চেষ্টা করুন।"
       );
@@ -511,6 +608,31 @@ export function CheckoutForm({
               </div>
             )}
 
+            {courierEnabled && (
+              <div className="rounded-2xl border border-border p-4">
+                <p className="font-bold">হোম ডেলিভারি (Pathao)</p>
+                <p className="mt-1 text-sm text-muted">
+                  ডেলিভারি চার্জ জানতে আপনার শহর, জোন ও এরিয়া বাছাই করুন। মূল্য পণ্য হাতে পেয়ে পরিশোধ করবেন।
+                </p>
+                <div className="mt-3">
+                  <CourierLocationFields value={courierLocation} onChange={setCourierLocation} />
+                </div>
+                {quoting && <p className="mt-3 text-sm text-muted">ডেলিভারি চার্জ হিসাব হচ্ছে…</p>}
+                {!quoting && courierQuote?.available && (
+                  <p className="mt-3 text-sm font-semibold">
+                    ডেলিভারি চার্জ: ৳{courierQuote.delivery_fee.toLocaleString("bn-BD")}
+                  </p>
+                )}
+                {!quoting && courierQuote && !courierQuote.available && (
+                  <p className="mt-3 text-sm text-[#8A4B00]">
+                    {courierUnavailableForProduct
+                      ? `${courierQuote.message} (বিক্রেতা নিজে ডেলিভারির ব্যবস্থা করবেন)`
+                      : courierQuote.message}
+                  </p>
+                )}
+              </div>
+            )}
+
             {formError && (
               <p role="alert" className="rounded-xl bg-[#FEECEC] px-4 py-3 text-sm font-semibold text-[#B42318]">
                 {formError}
@@ -547,11 +669,25 @@ export function CheckoutForm({
               </div>
             ))}
           </div>
+          {useCourier && (
+            <div className="mt-4 flex justify-between text-sm">
+              <span>ডেলিভারি চার্জ</span>
+              <span>
+                {courierQuote?.available
+                  ? `৳${courierFee.toLocaleString("bn-BD")}`
+                  : "এলাকা বাছাই করুন"}
+              </span>
+            </div>
+          )}
           <div className="mt-4 flex items-baseline justify-between border-t border-border pt-4">
             <span className="font-bold">মোট</span>
-            <span className="text-2xl font-extrabold">৳{total.toLocaleString("bn-BD")}</span>
+            <span className="text-2xl font-extrabold">
+              ৳{(total + (useCourier ? courierFee : 0)).toLocaleString("bn-BD")}
+            </span>
           </div>
-          <p className="mt-1 text-xs text-muted">দাম ভ্যাটসহ</p>
+          <p className="mt-1 text-xs text-muted">
+            {useCourier ? "দাম সার্ভিস চার্জসহ · ক্যাশ অন ডেলিভারি" : "দাম সার্ভিস চার্জসহ"}
+          </p>
         </Card>
       </div>
     </div>

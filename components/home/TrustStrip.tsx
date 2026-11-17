@@ -2,7 +2,7 @@ import { BoxIcon, ChatIcon, PhoneIcon, TagIcon } from "@/components/ui/icons";
 
 export function TrustStrip({ guestCheckout }: { guestCheckout: boolean }) {
   const items = [
-    { Icon: TagIcon, tone: "bg-primary-soft text-primary-strong", title: "ভ্যাটসহ স্পষ্ট দাম", body: "যা দেখবেন, তা-ই দেবেন। কোনো লুকানো চার্জ নেই।" },
+    { Icon: TagIcon, tone: "bg-primary-soft text-primary-strong", title: "সার্ভিস চার্জসহ স্পষ্ট দাম", body: "যা দেখবেন, তা-ই দেবেন। কোনো লুকানো চার্জ নেই।" },
     { Icon: ChatIcon, tone: "bg-navy-soft text-navy", title: "সেলারের সাথে সরাসরি চ্যাট", body: "দাম, সাইজ, ডেলিভারি নিয়ে সরাসরি কথা বলুন।" },
     { Icon: BoxIcon, tone: "bg-teal-soft text-teal", title: "MOQ অনুযায়ী পাইকারি অর্ডার", body: "সাইজ ও রং মিলিয়ে একবারেই অর্ডার।" },
     guestCheckout

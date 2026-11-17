@@ -8,7 +8,7 @@ import { fetchInitialProductFeed, parseCatalogStoreType } from "@/lib/products";
 export const metadata: Metadata = {
   title: "সব পণ্য",
   description:
-    "বাংলাদেশের পাইকারি ও খুচরা সেলারদের পোশাক — ভ্যাটসহ দাম, MOQ অনুযায়ী অর্ডার। Browse wholesale clothing from Bangladeshi suppliers.",
+    "বাংলাদেশের পাইকারি ও খুচরা সেলারদের পোশাক — সার্ভিস চার্জসহ দাম, MOQ অনুযায়ী অর্ডার। Browse wholesale clothing from Bangladeshi suppliers.",
 };
 
 type ProductsPageProps = {
@@ -46,7 +46,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">{title}</h1>
           <p className="mt-1 text-sm text-muted">
-            {total > 0 ? `${total.toLocaleString("bn-BD")}টি পণ্য · ` : ""}সব দাম ভ্যাটসহ, প্রতি পিস
+            {total > 0 ? `${total.toLocaleString("bn-BD")}টি পণ্য · ` : ""}সব দাম সার্ভিস চার্জসহ, প্রতি পিস
           </p>
         </div>
       </div>

@@ -7,11 +7,11 @@ export type ProductFeedItem = {
   id: string;
   productImg: string | null;
   name: string;
-  /** Buyer-facing unit price (VAT-inclusive). */
+  /** Buyer-facing unit price (incl. service charge). */
   price: number | string;
   price_base?: number;
-  vat_rate?: number;
-  vat_amount?: number;
+  service_charge_rate?: number;
+  service_charge_amount?: number;
   seller_store_type?: string | null;
   moq: number;
   isSponsored?: boolean;

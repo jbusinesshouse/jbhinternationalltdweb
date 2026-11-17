@@ -23,7 +23,7 @@ import {
 import { apiRequest, newIdempotencyKey } from "@/lib/api";
 import type { UserProfile } from "@/lib/profile";
 import { categoryLabel } from "@/lib/labels";
-import { buyerPriceVatHint } from "@/lib/vat";
+import { buyerPriceServiceChargeHint } from "@/lib/serviceCharge";
 
 const MAX_ADDITIONAL_IMAGES = 8;
 
@@ -95,6 +95,9 @@ export function ProductUploadForm({
   const [subCategoryId, setSubCategoryId] = useState<string | null>(null);
   const [price, setPrice] = useState("");
   const [moq, setMoq] = useState("");
+  /** Optional kg per unit (courier pricing). Blank = server default. */
+  const [weightKg, setWeightKg] = useState("");
+  const [hadWeight, setHadWeight] = useState(false);
   const [description, setDescription] = useState("");
   const [variants, setVariants] = useState<Variant[]>([]);
 
@@ -136,6 +139,7 @@ export function ProductUploadForm({
         price: number | string;
         price_base?: number;
         moq: number;
+        weight_kg?: number | string | null;
         description: string | null;
         category_id: string | null;
         subcategory_id: string | null;
@@ -144,9 +148,13 @@ export function ProductUploadForm({
     }>(`/products/${productId}`, { auth: true })
       .then(({ product: data }) => {
         setName(data.name);
-        // The form edits the seller's base price; the API returns the buyer (VAT-incl.) price too.
+        // The form edits the seller's base price; the API returns the buyer (incl. service charge) price too.
         setPrice(String(data.price_base ?? data.price));
         setMoq(String(data.moq));
+        if (data.weight_kg != null && Number(data.weight_kg) > 0) {
+          setWeightKg(String(data.weight_kg));
+          setHadWeight(true);
+        }
         setDescription(data.description ?? "");
         setParentCategoryId(data.category_id ?? null);
         setSubCategoryId(data.subcategory_id ?? null);
@@ -376,6 +384,12 @@ export function ProductUploadForm({
         return;
       }
 
+      const editWeight = parsePositiveNumber(weightKg);
+      if (weightKg.trim() && !editWeight) {
+        alert("ওজন সঠিকভাবে লিখুন (যেমন 0.5)");
+        return;
+      }
+
       setSubmitting(true);
       try {
         await apiRequest(`/products/${productId}`, {
@@ -385,6 +399,8 @@ export function ProductUploadForm({
             name: name.trim(),
             price: priceNum,
             moq: moqNum,
+            // Only sent when set (or cleared after being set).
+            ...(editWeight ? { weight_kg: editWeight } : hadWeight ? { weight_kg: null } : {}),
             description,
             category_id: parentCategoryId,
             subcategory_id: subCategoryId,
@@ -437,6 +453,7 @@ export function ProductUploadForm({
           selected_category: category.trim(),
           price: parsedPrice,
           moq: parsedMoq,
+          ...(parsePositiveNumber(weightKg) ? { weight_kg: parsePositiveNumber(weightKg) } : {}),
           images,
           variants: variants.map((v) => ({
             color: v.color.trim(),
@@ -626,7 +643,7 @@ export function ProductUploadForm({
               required
             />
             <input
-              placeholder="প্রতি পিসের দাম (টাকা, ভ্যাট ছাড়া)"
+              placeholder="প্রতি পিসের দাম (টাকা, সার্ভিস চার্জ ছাড়া)"
               aria-label="প্রতি পিসের দাম"
               value={price}
               onChange={(e) => setPrice(e.target.value)}
@@ -635,9 +652,9 @@ export function ProductUploadForm({
               required
             />
             {(() => {
-              const vatHint = buyerPriceVatHint(price, profile?.store_type);
-              return vatHint ? (
-                <p className="-mt-1 text-xs text-muted">{vatHint}</p>
+              const serviceChargeHint = buyerPriceServiceChargeHint(price, profile?.store_type);
+              return serviceChargeHint ? (
+                <p className="-mt-1 text-xs text-muted">{serviceChargeHint}</p>
               ) : null;
             })()}
             <input
@@ -649,6 +666,15 @@ export function ProductUploadForm({
               className={fieldClass}
               required
             />
+            <input
+              placeholder="প্রতি পিসের ওজন (কেজি, ঐচ্ছিক) — যেমন 0.5"
+              aria-label="প্রতি পিসের ওজন (কেজি)"
+              value={weightKg}
+              onChange={(e) => setWeightKg(e.target.value)}
+              inputMode="decimal"
+              className={fieldClass}
+            />
+            <p className="-mt-1 text-xs text-muted">কুরিয়ার ডেলিভারি চার্জ হিসাবের জন্য ব্যবহার হবে।</p>
             <RichTextEditor value={description} onChange={setDescription} />
           </section>
 

@@ -5,7 +5,7 @@ import { TERMS_AND_CONDITIONS } from "@/lib/legalContent";
 
 export const metadata: Metadata = {
   title: "শর্তাবলী",
-  description: `${BRAND.name}-এর শর্তাবলী — মার্কেটপ্লেসের নিয়ম, ভ্যাটসহ মূল্য, অ্যাকাউন্ট ও দায়বদ্ধতা। Terms & Conditions.`,
+  description: `${BRAND.name}-এর শর্তাবলী — মার্কেটপ্লেসের নিয়ম, সার্ভিস চার্জসহ মূল্য, অ্যাকাউন্ট ও দায়বদ্ধতা। Terms & Conditions.`,
 };
 
 export default function TermsPage() {

@@ -49,7 +49,7 @@ export default async function HomePage() {
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h2 className="text-2xl font-extrabold tracking-tight sm:text-[26px]">আপনার জন্য পণ্য</h2>
-            <p className="mt-1 text-muted">সব দাম ভ্যাটসহ · প্রতি পিস</p>
+            <p className="mt-1 text-muted">সব দাম সার্ভিস চার্জসহ · প্রতি পিস</p>
           </div>
           <nav aria-label="পণ্যের ধরন" className="flex gap-1 rounded-xl bg-[#E9ECF1] p-1">
             <Link href="/products" className={`${tab} bg-white font-bold shadow-sm`}>সব</Link>

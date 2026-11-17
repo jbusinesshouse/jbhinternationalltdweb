@@ -7,6 +7,7 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Card, PageHeader, StatusBadge } from "@/components/ui/PageElements";
 import { apiRequest } from "@/lib/api";
 import { calcOrderItemCount, calcOrderTotal, formatBdt, formatDate } from "@/lib/utils";
+import { PublicShipment, SHIPMENT_STATUS_LABEL } from "@/lib/courier";
 
 const STATUS_FLOW = ["pending", "processing", "shipped", "completed"] as const;
 
@@ -50,7 +51,23 @@ type Order = {
   delivery_address: string;
   user_id: string;
   order_items: OrderItem[];
+  /** Present after the delivery migration; "pathao" = courier order. */
+  delivery_method?: string | null;
+  delivery_fee?: number | string | null;
+  cod_amount?: number | string | null;
 };
+
+/** Courier owns shipped/completed while its parcel is active or delivered. */
+const COURIER_CONTROLLED = new Set([
+  "queued",
+  "submitting",
+  "unknown",
+  "booked",
+  "pickup",
+  "in_transit",
+  "delivered",
+  "partial_delivered",
+]);
 
 function BackIcon() {
   return (
@@ -180,10 +197,16 @@ export function SalesDetail({ orderId }: { orderId: string }) {
     text: string;
   } | null>(null);
 
+  const [shipment, setShipment] = useState<PublicShipment | null>(null);
+
   const load = async () => {
     try {
-      const res = await apiRequest<{ order: Order }>(`/sales/${orderId}`, { auth: true });
+      const res = await apiRequest<{ order: Order; shipment?: PublicShipment | null }>(
+        `/sales/${orderId}`,
+        { auth: true }
+      );
       setOrder(res.order);
+      setShipment(res.shipment ?? null);
     } catch {
       setOrder(null);
     }
@@ -227,6 +250,8 @@ export function SalesDetail({ orderId }: { orderId: string }) {
           ? "ক্রেতার কাছে বাতিলের অনুরোধ পাঠানো হয়েছে।"
           : `স্ট্যাটাস আপডেট হয়েছে: ${STEP_LABEL[pendingStatus] ?? pendingStatus}।`
       );
+      // Courier order accepted → pick up the new shipment details.
+      if (order.delivery_method === "pathao") void load();
     } catch (err) {
       if (!isCancelRequest) {
         setOrder((prev) => (prev ? { ...prev, status: oldStatus } : prev));
@@ -259,6 +284,11 @@ export function SalesDetail({ orderId }: { orderId: string }) {
   const shortId = order.id.slice(0, 8).toUpperCase();
 
   const pendingOption = STATUS_OPTIONS.find((o) => o.key === pendingStatus);
+  const isCourierOrder = order.delivery_method === "pathao";
+  const courierControlled = isCourierOrder && !!shipment && COURIER_CONTROLLED.has(shipment.status);
+  const visibleOptions = courierControlled
+    ? STATUS_OPTIONS.filter((o) => o.key !== "shipped" && o.key !== "completed")
+    : STATUS_OPTIONS;
 
   return (
     <div>
@@ -362,13 +392,43 @@ export function SalesDetail({ orderId }: { orderId: string }) {
               <StatusTimeline status={order.status} />
             </div>
 
+            {isCourierOrder && (
+              <div className="mt-5 rounded-2xl border border-border bg-surface p-4 text-sm">
+                <p className="font-bold text-foreground">Pathao কুরিয়ার ডেলিভারি</p>
+                {shipment ? (
+                  <>
+                    <p className="mt-1 text-foreground">
+                      অবস্থা: {SHIPMENT_STATUS_LABEL[shipment.status] ?? shipment.status}
+                    </p>
+                    <p className="mt-2 text-muted">
+                      পার্সেলের গায়ে লিখুন:{" "}
+                      <span className="font-mono font-bold text-foreground">{shipment.merchant_order_id}</span>
+                    </p>
+                    {shipment.consignment_id && (
+                      <p className="mt-1 text-muted">
+                        কনসাইনমেন্ট আইডি:{" "}
+                        <span className="font-mono font-semibold text-foreground">{shipment.consignment_id}</span>
+                      </p>
+                    )}
+                    <p className="mt-1 text-muted">
+                      ক্রেতার কাছ থেকে আদায়: {formatBdt(Number(shipment.amount_to_collect))}
+                    </p>
+                  </>
+                ) : (
+                  <p className="mt-1 text-muted">
+                    &quot;প্রসেসিং&quot; করলে Pathao পিকআপ বুক হবে। শিপড/সম্পন্ন স্ট্যাটাস কুরিয়ার থেকে স্বয়ংক্রিয়ভাবে আসবে।
+                  </p>
+                )}
+              </div>
+            )}
+
             {!isHold && order.status?.toLowerCase() !== "cancelled" && (
               <div className="mt-6">
                 <p className="mb-3 text-sm text-muted">
                   ক্রেতাকে জানাতে স্ট্যাটাস আপডেট করুন
                 </p>
                 <div className="grid gap-2 sm:grid-cols-2">
-                  {STATUS_OPTIONS.map((opt) => {
+                  {visibleOptions.map((opt) => {
                     const isActive =
                       order.status?.toLowerCase() === opt.key;
                     return (

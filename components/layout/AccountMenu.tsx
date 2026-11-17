@@ -104,7 +104,6 @@ export function AccountMenu({ user, profile }: AccountMenuProps) {
 
   const name = displayNameFor(user, profile);
   const isSeller = profile?.store_type === "wholesale" || profile?.store_type === "retail";
-  const isWholesale = profile?.store_type === "wholesale";
 
   const signOut = async () => {
     setSigningOut(true);
@@ -152,9 +151,7 @@ export function AccountMenu({ user, profile }: AccountMenuProps) {
               <>
                 <div className="my-1 h-px bg-border" />
                 <Link role="menuitem" href="/hub" className={item}><DashboardIcon size={18} />সেলার হাব</Link>
-                {isWholesale && (
-                  <Link role="menuitem" href="/sales" className={item}><BoxIcon size={18} />বিক্রি ও অর্ডার</Link>
-                )}
+                <Link role="menuitem" href="/sales" className={item}><BoxIcon size={18} />বিক্রি ও অর্ডার</Link>
                 <Link role="menuitem" href="/product-upload" className={item}><PlusIcon size={18} />নতুন পণ্য</Link>
               </>
             )}

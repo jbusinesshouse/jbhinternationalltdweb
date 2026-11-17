@@ -51,7 +51,7 @@ export function HomeHero({ categories, showcase, user, profile }: HomeHeroProps)
             পাইকারি দামে সরাসরি সেলারের কাছ থেকে কিনুন
           </h1>
           <p className="text-base leading-relaxed text-[#3A2410] sm:text-[17px]">
-            ভ্যাটসহ স্পষ্ট দাম, MOQ অনুযায়ী অর্ডার, আর সেলারের সাথে সরাসরি চ্যাট — সব এক জায়গায়।
+            সার্ভিস চার্জসহ স্পষ্ট দাম, MOQ অনুযায়ী অর্ডার, আর সেলারের সাথে সরাসরি চ্যাট — সব এক জায়গায়।
           </p>
           <div className="mt-1 flex flex-wrap gap-3">
             <Link href="/products" className="inline-flex h-[52px] items-center rounded-2xl bg-navy px-6 font-bold text-white hover:bg-navy-dark">

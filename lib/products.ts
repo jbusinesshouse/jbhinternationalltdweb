@@ -114,11 +114,11 @@ export type ProductReview = {
 export type ProductDetail = {
   id: string;
   name: string;
-  /** Buyer-facing (VAT-inclusive). */
+  /** Buyer-facing (incl. service charge). */
   price: number | string;
   price_base: number;
-  vat_rate: number;
-  vat_amount: number;
+  service_charge_rate: number;
+  service_charge_amount: number;
   seller_store_type?: string | null;
   moq: number;
   description: string;

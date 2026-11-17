@@ -7,20 +7,24 @@ import { Button } from "@/components/ui/Button";
 import { Card, PageHeader, StatusBadge } from "@/components/ui/PageElements";
 import { apiRequest } from "@/lib/api";
 import { calcOrderItemCount, calcOrderTotal, formatBdt, formatDate } from "@/lib/utils";
+import { PublicShipment, SHIPMENT_STATUS_LABEL } from "@/lib/courier";
 
 export function OrderDetail({ orderId }: { orderId: string }) {
   const [order, setOrder] = useState<any>(null);
   const [seller, setSeller] = useState<any>(null);
+  const [shipment, setShipment] = useState<PublicShipment | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await apiRequest<{ order: any; seller: any }>(`/orders/${orderId}`, {
-          auth: true,
-        });
+        const res = await apiRequest<{ order: any; seller: any; shipment?: PublicShipment | null }>(
+          `/orders/${orderId}`,
+          { auth: true }
+        );
         setOrder(res.order);
         setSeller(res.seller);
+        setShipment(res.shipment ?? null);
       } catch {
         setOrder(null);
       }
@@ -121,6 +125,21 @@ export function OrderDetail({ orderId }: { orderId: string }) {
           <p className="text-sm text-muted">
             {order.delivery_address}, {order.city}
           </p>
+          {order.delivery_method === "pathao" && (
+            <div className="mt-3 border-t border-border pt-3 text-sm">
+              <p className="font-semibold">Pathao হোম ডেলিভারি</p>
+              <p className="text-muted">
+                ডেলিভারি চার্জ: {formatBdt(Number(order.delivery_fee) || 0)} · ডেলিভারির সময় পরিশোধ:{" "}
+                {formatBdt(Number(order.cod_amount) || 0)}
+              </p>
+              {shipment && (
+                <p className="mt-1 text-muted">
+                  অবস্থা: {SHIPMENT_STATUS_LABEL[shipment.status] ?? shipment.status}
+                  {shipment.consignment_id ? ` · কনসাইনমেন্ট: ${shipment.consignment_id}` : ""}
+                </p>
+              )}
+            </div>
+          )}
         </Card>
 
         {order.status?.toLowerCase() === "completed" && (

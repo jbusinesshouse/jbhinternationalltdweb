@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
   if (!product) return { title: "পণ্য পাওয়া যায়নি" };
 
   const mainImage = product.product_images.find((img) => img.is_main) ?? product.product_images[0];
-  const summary = `${bnPrice(product.price)} / পিস (ভ্যাটসহ) · MOQ ${bnNumber(product.moq)} পিস`;
+  const summary = `${bnPrice(product.price)} / পিস (সার্ভিস চার্জসহ) · MOQ ${bnNumber(product.moq)} পিস`;
   return {
     title: product.name,
     description: `${summary}. ${htmlToPlainText(product.description).slice(0, 140)}`,
@@ -53,7 +53,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
 
   const descriptionHtml = sanitizeDescriptionHtml(product.description);
   const typeLabel = product.seller_store_type ? STORE_TYPE_LABEL[product.seller_store_type] : null;
-  const vatPercent = Math.round((product.vat_rate ?? 0) * 100);
+  const serviceChargePercent = Math.round((product.service_charge_rate ?? 0) * 100);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -109,7 +109,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
                 {typeLabel} · {product.seller_store_type === "retail" ? "Retail" : "Wholesale"}
               </span>
             )}
-            <span className="rounded-full bg-[#F3F4F6] px-3 py-1 text-[13px] font-semibold">ভ্যাটসহ দাম</span>
+            <span className="rounded-full bg-[#F3F4F6] px-3 py-1 text-[13px] font-semibold">সার্ভিস চার্জসহ দাম</span>
           </div>
           <h1 className="text-2xl font-extrabold leading-snug tracking-tight sm:text-3xl">{product.name}</h1>
           <p className="-mt-2 text-sm text-muted">
@@ -123,9 +123,9 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
               <p className="text-[34px] font-extrabold leading-none tracking-tight">
                 {bnPrice(product.price)} <span className="text-[15px] font-medium text-muted">/ পিস</span>
               </p>
-              {vatPercent > 0 && (
+              {serviceChargePercent > 0 && (
                 <p className="mt-2 text-[13px] text-muted">
-                  বেস দাম {bnPrice(product.price_base)} + ভ্যাট {bnPrice(product.vat_amount)} ({bnNumber(vatPercent)}%)
+                  বেস দাম {bnPrice(product.price_base)} + সার্ভিস চার্জ {bnPrice(product.service_charge_amount)} ({bnNumber(serviceChargePercent)}%)
                 </p>
               )}
             </div>
@@ -178,7 +178,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
             </div>
           )}
           <ul className="flex flex-col gap-3 rounded-[18px] border border-border bg-white p-5 text-sm">
-            {["দাম ভ্যাটসহ — চেকআউটে বাড়তি কিছু নেই", "সাইজ ও রং মিলিয়ে এক অর্ডারে", "অর্ডারের পর সেলার আপনার সাথে যোগাযোগ করবেন"].map((t) => (
+            {["দাম সার্ভিস চার্জসহ — চেকআউটে বাড়তি কিছু নেই", "সাইজ ও রং মিলিয়ে এক অর্ডারে", "অর্ডারের পর সেলার আপনার সাথে যোগাযোগ করবেন"].map((t) => (
               <li key={t} className="flex items-start gap-2.5">
                 <span aria-hidden="true" className="font-extrabold text-teal">✓</span>
                 {t}
